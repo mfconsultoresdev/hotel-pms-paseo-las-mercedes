@@ -5,7 +5,10 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET - Obtener tarea específica
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -38,17 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         },
         supply_usage: {
           include: {
-            supply: true,
-            staff: {
-              include: {
-                user: {
-                  select: {
-                    name: true,
-                    email: true
-                  }
-                }
-              }
-            }
+            supply: true
           }
         },
         room_inspections: {
@@ -64,7 +57,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Get assigned staff info
+    // Get assigned staff information
     let assignedStaff = null
     if (task.assigned_to) {
       const user = await prisma.user.findUnique({
@@ -93,7 +86,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     })
 
   } catch (error) {
-    console.error('Error fetching housekeeping task:', error)
+    console.error('Error fetching task:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
@@ -101,8 +94,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// PUT - Actualizar tarea
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+// PATCH - Actualizar tarea
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -116,17 +112,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json()
     const {
       status,
-      assigned_to,
       priority,
+      assigned_to,
       description,
       special_instructions,
       estimated_duration,
       actual_duration,
+      started_date,
+      completed_date,
       inspection_status,
       inspection_notes
     } = body
 
-    // Verify task exists and belongs to hotel
+    // Verify task belongs to hotel
     const existingTask = await prisma.housekeepingTask.findFirst({
       where: {
         id: params.id,
@@ -146,35 +144,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       updated_by: session.user?.id
     }
 
-    if (status !== undefined) {
-      updateData.status = status
-      
-      // Set dates based on status
-      if (status === 'IN_PROGRESS' && !existingTask.started_date) {
-        updateData.started_date = new Date()
-      }
-      
-      if (status === 'COMPLETED' && !existingTask.completed_date) {
-        updateData.completed_date = new Date()
-      }
-    }
-
+    if (status !== undefined) updateData.status = status
+    if (priority !== undefined) updateData.priority = priority
     if (assigned_to !== undefined) {
       updateData.assigned_to = assigned_to
-      if (assigned_to && !existingTask.assigned_date) {
-        updateData.assigned_date = new Date()
-      }
+      updateData.assigned_date = assigned_to ? new Date() : null
     }
-
-    if (priority !== undefined) updateData.priority = priority
     if (description !== undefined) updateData.description = description
     if (special_instructions !== undefined) updateData.special_instructions = special_instructions
     if (estimated_duration !== undefined) updateData.estimated_duration = estimated_duration
     if (actual_duration !== undefined) updateData.actual_duration = actual_duration
+    if (started_date !== undefined) updateData.started_date = started_date ? new Date(started_date) : null
+    if (completed_date !== undefined) updateData.completed_date = completed_date ? new Date(completed_date) : null
     if (inspection_status !== undefined) updateData.inspection_status = inspection_status
     if (inspection_notes !== undefined) updateData.inspection_notes = inspection_notes
 
-    const task = await prisma.housekeepingTask.update({
+    // Update task
+    const updatedTask = await prisma.housekeepingTask.update({
       where: { id: params.id },
       data: updateData,
       include: {
@@ -195,11 +181,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     })
 
-    // Update room status based on task completion
+    // Update room status if task is completed
     if (status === 'COMPLETED' && existingTask.task_type === 'CHECKOUT_CLEANING') {
       await prisma.room.update({
-        where: { id: existingTask.room_id },
-        data: { 
+        where: { id: updatedTask.room_id },
+        data: {
           status: 'AVAILABLE',
           last_cleaned: new Date()
         }
@@ -208,11 +194,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({
       success: true,
-      task
+      task: updatedTask
     })
 
   } catch (error) {
-    console.error('Error updating housekeeping task:', error)
+    console.error('Error updating task:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
@@ -221,7 +207,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE - Eliminar tarea
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -232,7 +221,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    // Verify task exists and belongs to hotel
+    // Verify task belongs to hotel
     const task = await prisma.housekeepingTask.findFirst({
       where: {
         id: params.id,
@@ -247,14 +236,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    // Don't delete completed tasks
-    if (task.status === 'COMPLETED') {
-      return NextResponse.json(
-        { error: 'No se pueden eliminar tareas completadas' },
-        { status: 400 }
-      )
-    }
-
+    // Delete task (task items will be deleted due to cascade)
     await prisma.housekeepingTask.delete({
       where: { id: params.id }
     })
@@ -265,11 +247,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
 
   } catch (error) {
-    console.error('Error deleting housekeeping task:', error)
+    console.error('Error deleting task:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
-

@@ -18,8 +18,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
-    const lowStock = searchParams.get('low_stock') === 'true'
+    const needsReorder = searchParams.get('needs_reorder') === 'true'
     const isActive = searchParams.get('is_active')
+    const name = searchParams.get('name')
     
     // Build where clause
     const where: any = {
@@ -28,13 +29,13 @@ export async function GET(request: NextRequest) {
 
     if (category) where.category = category
     if (isActive !== null) where.is_active = isActive === 'true'
-    
-    if (lowStock) {
-      where.current_stock = {
-        lte: prisma.housekeepingSupply.fields.minimum_stock
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive'
       }
     }
-
+    
     const supplies = await prisma.housekeepingSupply.findMany({
       where,
       include: {
@@ -68,8 +69,16 @@ export async function GET(request: NextRequest) {
       ]
     })
 
+    // Filter for low stock if needed
+    let filteredSupplies = supplies
+    if (needsReorder) {
+      filteredSupplies = supplies.filter(supply => 
+        Number(supply.current_stock) <= Number(supply.minimum_stock)
+      )
+    }
+
     // Calculate metrics for each supply
-    const suppliesWithMetrics = supplies.map(supply => {
+    const suppliesWithMetrics = filteredSupplies.map(supply => {
       const isLowStock = Number(supply.current_stock) <= Number(supply.minimum_stock)
       const stockLevel = Number(supply.maximum_stock) > 0 
         ? (Number(supply.current_stock) / Number(supply.maximum_stock)) * 100
