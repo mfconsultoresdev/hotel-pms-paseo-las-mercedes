@@ -16,7 +16,8 @@ import {
   Settings, 
   Menu,
   LogOut,
-  Hotel
+  Hotel,
+  BarChart3
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
@@ -57,6 +58,12 @@ const sidebarNavItems: SidebarNavItem[] = [
     href: '/billing',
     icon: CreditCard,
     description: 'Facturación y pagos'
+  },
+  {
+    title: 'Reportes',
+    href: '/reports',
+    icon: BarChart3,
+    description: 'Reportes y analytics'
   },
   {
     title: 'Configuración',
