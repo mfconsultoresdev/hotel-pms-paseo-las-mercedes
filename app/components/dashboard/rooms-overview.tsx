@@ -21,8 +21,11 @@ import {
 interface Room {
   id: string
   room_number: string
-  floor: number
   status: string
+  floor: {
+    floor_number: number
+    name?: string
+  }
   room_type: {
     id: string
     name: string
@@ -52,14 +55,14 @@ export function RoomsOverview({ maxRooms = 12 }: RoomsOverviewProps) {
       setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/rooms/overview')
+      const response = await fetch('/api/rooms?limit=' + maxRooms)
       
       if (!response.ok) {
         throw new Error('Error al cargar las habitaciones')
       }
       
-      const roomsData = await response.json()
-      setRooms(roomsData.slice(0, maxRooms))
+      const data = await response.json()
+      setRooms(Array.isArray(data.rooms) ? data.rooms : [])
     } catch (err) {
       console.error('Rooms overview error:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
@@ -125,7 +128,11 @@ export function RoomsOverview({ maxRooms = 12 }: RoomsOverviewProps) {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.href = '/rooms'}
+            >
               <Eye className="h-4 w-4 mr-2" />
               Ver Todas
             </Button>
@@ -184,7 +191,7 @@ export function RoomsOverview({ maxRooms = 12 }: RoomsOverviewProps) {
                 </div>
                 
                 <div className="text-sm text-muted-foreground mb-2">
-                  {room.room_type.name} • Piso {room.floor}
+                  {room.room_type.name} • {room.floor.name || `Piso ${room.floor.floor_number}`}
                 </div>
                 
                 <div className="text-sm text-muted-foreground">

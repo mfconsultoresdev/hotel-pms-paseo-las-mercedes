@@ -69,9 +69,9 @@ export default function RoomsPage() {
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [floorFilter, setFloorFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [floorFilter, setFloorFilter] = useState('ALL')
+  const [typeFilter, setTypeFilter] = useState('ALL')
   
   // Modal para crear habitación
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -198,9 +198,9 @@ export default function RoomsPage() {
   const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.room_type.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = !statusFilter || room.status === statusFilter
-    const matchesFloor = !floorFilter || room.floor.id === floorFilter
-    const matchesType = !typeFilter || room.room_type.id === typeFilter
+    const matchesStatus = statusFilter === 'ALL' || room.status === statusFilter
+    const matchesFloor = floorFilter === 'ALL' || room.floor.id === floorFilter
+    const matchesType = typeFilter === 'ALL' || room.room_type.id === typeFilter
 
     return matchesSearch && matchesStatus && matchesFloor && matchesType
   })
@@ -361,7 +361,7 @@ export default function RoomsPage() {
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los estados</SelectItem>
+                  <SelectItem value="ALL">Todos los estados</SelectItem>
                   <SelectItem value="AVAILABLE">Disponible</SelectItem>
                   <SelectItem value="OCCUPIED">Ocupada</SelectItem>
                   <SelectItem value="CLEANING">Limpieza</SelectItem>
@@ -375,7 +375,7 @@ export default function RoomsPage() {
                   <SelectValue placeholder="Piso" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="ALL">Todos</SelectItem>
                   {floors.map((floor) => (
                     <SelectItem key={floor.id} value={floor.id}>
                       Piso {floor.floor_number}
@@ -389,7 +389,7 @@ export default function RoomsPage() {
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="ALL">Todos</SelectItem>
                   {roomTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id}>
                       {type.name}
