@@ -1,94 +1,95 @@
 
+
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
-import {
-  UserCheck,
-  UserX,
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { 
+  Plus, 
+  UserPlus, 
+  LogIn, 
+  LogOut, 
+  Settings, 
+  ClipboardList,
   Calendar,
-  Users,
-  BedDouble,
-  ShoppingCart,
-  Zap
-} from "lucide-react"
+  Bed
+} from 'lucide-react'
+import Link from 'next/link'
 
 export function QuickActions() {
-  const router = useRouter()
-
   const actions = [
     {
-      title: "Nueva Reserva",
-      description: "Crear reserva rápida",
+      title: 'Nueva Reserva',
+      description: 'Crear una nueva reserva',
+      icon: Plus,
+      href: '/reservations/new',
+      color: 'bg-blue-500 hover:bg-blue-600'
+    },
+    {
+      title: 'Nuevo Huésped',
+      description: 'Registrar huésped',
+      icon: UserPlus,
+      href: '/guests/new',
+      color: 'bg-green-500 hover:bg-green-600'
+    },
+    {
+      title: 'Check-in',
+      description: 'Procesar llegada',
+      icon: LogIn,
+      href: '/checkin',
+      color: 'bg-amber-500 hover:bg-amber-600'
+    },
+    {
+      title: 'Check-out',
+      description: 'Procesar salida',
+      icon: LogOut,
+      href: '/checkout',
+      color: 'bg-red-500 hover:bg-red-600'
+    },
+    {
+      title: 'Ver Habitaciones',
+      description: 'Estado de habitaciones',
+      icon: Bed,
+      href: '/rooms',
+      color: 'bg-purple-500 hover:bg-purple-600'
+    },
+    {
+      title: 'Calendarios',
+      description: 'Ver reservas',
       icon: Calendar,
-      color: "bg-blue-600 hover:bg-blue-700",
-      onClick: () => router.push('/reservations/new')
-    },
-    {
-      title: "Check-in",
-      description: "Procesar llegada",
-      icon: UserCheck,
-      color: "bg-green-600 hover:bg-green-700",
-      onClick: () => router.push('/checkin')
-    },
-    {
-      title: "Check-out",
-      description: "Procesar salida",
-      icon: UserX,
-      color: "bg-orange-600 hover:bg-orange-700",
-      onClick: () => router.push('/checkout')
-    },
-    {
-      title: "Ver Habitaciones",
-      description: "Estado actual",
-      icon: BedDouble,
-      color: "bg-purple-600 hover:bg-purple-700",
-      onClick: () => router.push('/rooms')
-    },
-    {
-      title: "Nuevo Huésped",
-      description: "Registrar cliente",
-      icon: Users,
-      color: "bg-indigo-600 hover:bg-indigo-700",
-      onClick: () => router.push('/guests/new')
-    },
-    {
-      title: "POS",
-      description: "Punto de venta",
-      icon: ShoppingCart,
-      color: "bg-emerald-600 hover:bg-emerald-700",
-      onClick: () => router.push('/pos')
+      href: '/reservations',
+      color: 'bg-indigo-500 hover:bg-indigo-600'
     }
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5" />
+        <CardTitle className="flex items-center">
+          <ClipboardList className="h-5 w-5 mr-2" />
           Acciones Rápidas
         </CardTitle>
+        <CardDescription>
+          Operaciones más utilizadas
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 gap-3">
-          {actions.map((action, index) => (
+      <CardContent className="space-y-3">
+        {actions.map((action, index) => (
+          <Link key={index} href={action.href}>
             <Button
-              key={index}
-              onClick={action.onClick}
-              className={`${action.color} text-white justify-start h-auto p-4`}
-              variant="default"
+              variant="outline"
+              className="w-full justify-start h-auto p-4"
             >
-              <div className="flex items-center space-x-3 w-full">
-                <action.icon className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-medium">{action.title}</div>
-                  <div className="text-xs opacity-90">{action.description}</div>
-                </div>
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full ${action.color} flex items-center justify-center mr-3`}>
+                <action.icon className="h-4 w-4 text-white" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium">{action.title}</div>
+                <div className="text-xs text-muted-foreground">{action.description}</div>
               </div>
             </Button>
-          ))}
-        </div>
+          </Link>
+        ))}
       </CardContent>
     </Card>
   )

@@ -1,37 +1,53 @@
 
+
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useRouter } from "next/navigation"
-import { BedDouble, RefreshCw, Building, Eye } from "lucide-react"
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  Bed, 
+  Users, 
+  Wrench, 
+  X, 
+  RefreshCw, 
+  AlertCircle,
+  Eye
+} from 'lucide-react'
 
-interface RoomsData {
-  floorStats: Array<{
-    floor_number: number
-    total: number
-    available: number
-    occupied: number
-    cleaning: number
-    maintenance: number
-  }>
-  roomTypeStats: Array<{
-    room_type: string
-    total: number
-    available: number
-    occupied: number
-  }>
+interface Room {
+  id: string
+  room_number: string
+  floor: number
+  status: string
+  room_type: {
+    id: string
+    name: string
+    max_occupancy: number
+  }
+  current_reservation?: {
+    id: string
+    guest: {
+      first_name: string
+      last_name: string
+    }
+    check_out_date: string
+  }
 }
 
-export function RoomsOverview() {
-  const router = useRouter()
-  const [data, setData] = useState<RoomsData | null>(null)
+interface RoomsOverviewProps {
+  maxRooms?: number
+}
+
+export function RoomsOverview({ maxRooms = 12 }: RoomsOverviewProps) {
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchRoomsData = async () => {
+  const fetchRooms = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -39,11 +55,11 @@ export function RoomsOverview() {
       const response = await fetch('/api/rooms/overview')
       
       if (!response.ok) {
-        throw new Error('Error al cargar datos de habitaciones')
+        throw new Error('Error al cargar las habitaciones')
       }
       
       const roomsData = await response.json()
-      setData(roomsData)
+      setRooms(roomsData.slice(0, maxRooms))
     } catch (err) {
       console.error('Rooms overview error:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
@@ -53,213 +69,151 @@ export function RoomsOverview() {
   }
 
   useEffect(() => {
-    fetchRoomsData()
-  }, [])
+    fetchRooms()
+  }, [maxRooms])
 
-  const getStatusColor = (status: string, count: number, total: number) => {
-    if (count === 0) return 'bg-gray-100'
-    
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
-        return 'bg-green-500'
-      case 'occupied':
-        return 'bg-red-500'
-      case 'cleaning':
-        return 'bg-yellow-500'
-      case 'maintenance':
-        return 'bg-orange-500'
+      case 'AVAILABLE':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Disponible</Badge>
+      case 'OCCUPIED':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Ocupada</Badge>
+      case 'MAINTENANCE':
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Mantenimiento</Badge>
+      case 'OUT_OF_ORDER':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Fuera de Servicio</Badge>
       default:
-        return 'bg-gray-500'
+        return <Badge variant="outline">{status}</Badge>
     }
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Vista General de Habitaciones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BedDouble className="h-5 w-5" />
-            Vista General de Habitaciones
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <BedDouble className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>{error}</p>
-            <Button
-              onClick={fetchRoomsData}
-              variant="outline"
-              size="sm"
-              className="mt-2"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Reintentar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'AVAILABLE':
+        return <Bed className="h-4 w-4 text-green-600" />
+      case 'OCCUPIED':
+        return <Users className="h-4 w-4 text-blue-600" />
+      case 'MAINTENANCE':
+        return <Wrench className="h-4 w-4 text-orange-600" />
+      case 'OUT_OF_ORDER':
+        return <X className="h-4 w-4 text-red-600" />
+      default:
+        return <Bed className="h-4 w-4 text-gray-600" />
+    }
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      {/* Por Pisos */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Estado por Pisos
-          </CardTitle>
-          <Button
-            onClick={() => router.push('/rooms')}
-            variant="outline"
-            size="sm"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Ver Todas
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data?.floorStats?.map((floor) => (
-              <div key={floor.floor_number} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">
-                    Piso {floor.floor_number}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {floor.total} habitaciones
-                  </span>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center">
+              <Bed className="h-5 w-5 mr-2" />
+              Estado de Habitaciones
+            </CardTitle>
+            <CardDescription>
+              Vista general del estado actual de las habitaciones
+            </CardDescription>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchRooms}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+            <Button variant="outline" size="sm">
+              <Eye className="h-4 w-4 mr-2" />
+              Ver Todas
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Error State */}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchRooms}
+                className="ml-2"
+              >
+                Reintentar
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-6 w-20" />
                 </div>
-                
-                <div className="flex rounded-lg overflow-hidden h-3">
-                  {floor.available > 0 && (
-                    <div
-                      className="bg-green-500"
-                      style={{ width: `${(floor.available / floor.total) * 100}%` }}
-                      title={`${floor.available} disponibles`}
-                    />
-                  )}
-                  {floor.occupied > 0 && (
-                    <div
-                      className="bg-red-500"
-                      style={{ width: `${(floor.occupied / floor.total) * 100}%` }}
-                      title={`${floor.occupied} ocupadas`}
-                    />
-                  )}
-                  {floor.cleaning > 0 && (
-                    <div
-                      className="bg-yellow-500"
-                      style={{ width: `${(floor.cleaning / floor.total) * 100}%` }}
-                      title={`${floor.cleaning} limpieza`}
-                    />
-                  )}
-                  {floor.maintenance > 0 && (
-                    <div
-                      className="bg-orange-500"
-                      style={{ width: `${(floor.maintenance / floor.total) * 100}%` }}
-                      title={`${floor.maintenance} mantenimiento`}
-                    />
-                  )}
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span className="text-green-600">{floor.available} Disp.</span>
-                  <span className="text-red-600">{floor.occupied} Ocup.</span>
-                  <span className="text-yellow-600">{floor.cleaning} Limp.</span>
-                  <span className="text-orange-600">{floor.maintenance} Mant.</span>
-                </div>
+                <Skeleton className="h-3 w-24 mb-2" />
+                <Skeleton className="h-3 w-32" />
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {/* Por Tipo de Habitación */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BedDouble className="h-5 w-5" />
-            Estado por Tipo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data?.roomTypeStats?.map((type) => {
-              const occupancyRate = type.total > 0 ? (type.occupied / type.total) * 100 : 0
-              
-              return (
-                <div key={type.room_type} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      {type.room_type}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {occupancyRate.toFixed(1)}% ocupación
-                    </span>
+        {/* Rooms Grid */}
+        {!loading && rooms.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {rooms.map((room) => (
+              <div 
+                key={room.id}
+                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(room.status)}
+                    <span className="font-medium">Hab. {room.room_number}</span>
                   </div>
-                  
-                  <div className="flex rounded-lg overflow-hidden h-3">
-                    <div
-                      className="bg-red-500"
-                      style={{ width: `${occupancyRate}%` }}
-                    />
-                    <div
-                      className="bg-green-500"
-                      style={{ width: `${100 - occupancyRate}%` }}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span className="text-green-600">{type.available} disponibles</span>
-                    <span className="text-red-600">{type.occupied} ocupadas</span>
-                    <span className="text-gray-500">{type.total} total</span>
-                  </div>
+                  {getStatusBadge(room.status)}
                 </div>
-              )
-            })}
+                
+                <div className="text-sm text-muted-foreground mb-2">
+                  {room.room_type.name} • Piso {room.floor}
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  Capacidad: {room.room_type.max_occupancy} personas
+                </div>
+                
+                {room.current_reservation && (
+                  <div className="text-xs text-blue-600 mt-2 bg-blue-50 p-2 rounded">
+                    <div className="font-medium">
+                      {room.current_reservation.guest.first_name} {room.current_reservation.guest.last_name}
+                    </div>
+                    <div>
+                      Sale: {new Date(room.current_reservation.check_out_date).toLocaleDateString('es-VE')}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
+        )}
 
-          {/* Legend */}
-          <div className="mt-6 pt-4 border-t">
-            <div className="flex flex-wrap gap-4 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span>Disponible</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span>Ocupada</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span>Limpieza</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                <span>Mantenimiento</span>
-              </div>
-            </div>
+        {/* Empty State */}
+        {!loading && rooms.length === 0 && !error && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Bed className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No hay habitaciones disponibles</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

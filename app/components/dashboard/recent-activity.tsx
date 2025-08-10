@@ -1,17 +1,10 @@
 
+
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { 
-  DollarSign, 
-  CreditCard, 
-  ShoppingCart, 
-  RefreshCw, 
-  TrendingUp,
-  User,
-  Bed
-} from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Clock, DollarSign, CreditCard, Minus } from 'lucide-react'
 
 interface Transaction {
   id: string
@@ -32,135 +25,109 @@ interface RecentActivityProps {
 export function RecentActivity({ transactions }: RecentActivityProps) {
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'ROOM_CHARGE':
-        return Bed
-      case 'SERVICE_CHARGE':
-        return ShoppingCart
       case 'PAYMENT':
-        return CreditCard
+        return <DollarSign className="h-4 w-4 text-green-600" />
+      case 'CHARGE':
+        return <CreditCard className="h-4 w-4 text-blue-600" />
       case 'REFUND':
-        return RefreshCw
+        return <Minus className="h-4 w-4 text-red-600" />
       default:
-        return DollarSign
+        return <Clock className="h-4 w-4 text-gray-600" />
     }
   }
 
-  const getTransactionColor = (type: string) => {
+  const getTransactionBadge = (type: string) => {
     switch (type) {
-      case 'ROOM_CHARGE':
-        return 'text-blue-600 bg-blue-50'
-      case 'SERVICE_CHARGE':
-        return 'text-purple-600 bg-purple-50'
       case 'PAYMENT':
-        return 'text-green-600 bg-green-50'
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Pago</Badge>
+      case 'CHARGE':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Cargo</Badge>
       case 'REFUND':
-        return 'text-red-600 bg-red-50'
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Reembolso</Badge>
       default:
-        return 'text-gray-600 bg-gray-50'
+        return <Badge variant="outline">{type}</Badge>
     }
   }
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'ROOM_CHARGE':
-        return 'Cargo Habitación'
-      case 'SERVICE_CHARGE':
-        return 'Cargo Servicio'
-      case 'PAYMENT':
-        return 'Pago'
-      case 'REFUND':
-        return 'Reembolso'
-      case 'ADJUSTMENT':
-        return 'Ajuste'
-      default:
-        return type
-    }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('es-VE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: 'short'
+    }).format(date)
+  }
+
+  const formatAmount = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('es-VE', {
+      style: 'currency',
+      currency: currency || 'USD'
+    }).format(amount)
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+        <CardTitle className="flex items-center">
+          <Clock className="h-5 w-5 mr-2" />
           Actividad Reciente
         </CardTitle>
         <CardDescription>
           Últimas transacciones del día
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {transactions && transactions.length > 0 ? (
-            transactions.map((transaction) => {
-              const Icon = getTransactionIcon(transaction.type)
-              const colorClasses = getTransactionColor(transaction.type)
-              
-              return (
-                <div
-                  key={transaction.id}
-                  className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                >
-                  <div className={`p-2 rounded-lg ${colorClasses}`}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {transaction.description}
-                        </p>
-                        
-                        <div className="mt-1 space-y-1">
-                          {transaction.guest_name && (
-                            <div className="flex items-center text-xs text-gray-600">
-                              <User className="h-3 w-3 mr-1" />
-                              {transaction.guest_name}
-                            </div>
-                          )}
-                          
-                          {transaction.room_number && (
-                            <div className="flex items-center text-xs text-gray-600">
-                              <Bed className="h-3 w-3 mr-1" />
-                              Hab. {transaction.room_number}
-                            </div>
-                          )}
-                          
-                          {transaction.service_name && (
-                            <div className="flex items-center text-xs text-gray-600">
-                              <ShoppingCart className="h-3 w-3 mr-1" />
-                              {transaction.service_name}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(transaction.created_at).toLocaleString('es-VE')}
-                        </p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className={`text-sm font-medium ${
-                          transaction.type === 'REFUND' ? 'text-red-600' : 'text-gray-900'
-                        }`}>
-                          {transaction.type === 'REFUND' ? '-' : '+'}${transaction.amount.toFixed(2)}
-                        </p>
-                        <Badge variant="outline" className="text-xs">
-                          {getTypeLabel(transaction.type)}
-                        </Badge>
-                      </div>
+      <CardContent className="space-y-4">
+        {transactions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No hay transacciones recientes</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((transaction) => (
+              <div 
+                key={transaction.id}
+                className="flex items-center space-x-4 p-3 rounded-lg border bg-card"
+              >
+                <div className="flex-shrink-0">
+                  {getTransactionIcon(transaction.type)}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {transaction.description}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      {getTransactionBadge(transaction.type)}
+                      <p className="text-sm font-semibold">
+                        {formatAmount(transaction.amount, transaction.currency)}
+                      </p>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      {transaction.guest_name && (
+                        <span>• {transaction.guest_name}</span>
+                      )}
+                      {transaction.room_number && (
+                        <span>• Hab. {transaction.room_number}</span>
+                      )}
+                      {transaction.service_name && (
+                        <span>• {transaction.service_name}</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(transaction.created_at)}
+                    </span>
+                  </div>
                 </div>
-              )
-            })
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No hay transacciones recientes</p>
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
