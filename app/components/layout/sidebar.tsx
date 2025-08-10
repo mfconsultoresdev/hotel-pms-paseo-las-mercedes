@@ -22,7 +22,9 @@ import {
   ChevronLeft,
   Wallet,
   CreditCard,
-  Sparkles
+  Sparkles,
+  UserCog,
+  Clock
 } from 'lucide-react'
 
 const navigation = [
@@ -73,6 +75,18 @@ const navigation = [
     href: '/housekeeping',
     icon: Sparkles,
     description: 'Limpieza y mantenimiento'
+  },
+  {
+    name: 'Personal',
+    href: '/staff',
+    icon: UserCog,
+    description: 'Gestión de personal y empleados'
+  },
+  {
+    name: 'Horarios',
+    href: '/schedules',
+    icon: Clock,
+    description: 'Turnos y horarios del personal'
   },
   {
     name: 'Facturación',
