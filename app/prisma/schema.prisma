@@ -96,8 +96,13 @@ model Hotel {
   staff_attendance     StaffAttendance[]
   time_entries         TimeEntry[]
   staff_evaluations    StaffEvaluation[]
-  communication_messages CommunicationMessage[]
-  communication_recipients CommunicationRecipient[]
+  
+  // Communication Relations
+  message_templates           MessageTemplate[]
+  communication_messages      CommunicationMessage[]
+  communication_recipients    CommunicationRecipient[]
+  guest_communication_recipients GuestCommunicationRecipient[]
+  notifications               Notification[]
 
   @@map("hotels")
 }
@@ -304,6 +309,11 @@ model Guest {
   service_requests ServiceRequest[]
   invoices    Invoice[]
   payments    Payment[]
+  
+  // Communication Relations
+  messages_sent            CommunicationMessage[] @relation("MessageFromGuest")
+  guest_communication_recipients GuestCommunicationRecipient[] @relation("MessageToGuest")
+  notifications            Notification[] @relation("NotificationToGuest")
 
   @@unique([hotel_id, email])
   @@unique([hotel_id, document_type, document_number])
@@ -400,6 +410,10 @@ model Reservation {
   invoices        Invoice[]
   payments        Payment[]
   housekeeping_tasks HousekeepingTask[]
+  
+  // Communication Relations
+  messages                CommunicationMessage[] @relation("MessageToReservation")
+  guest_communication_recipients GuestCommunicationRecipient[] @relation("MessageToGuestReservation")
 
   @@map("reservations")
 }
@@ -1266,6 +1280,7 @@ model Staff {
   evaluations      StaffEvaluation[]
   sent_messages    CommunicationMessage[] @relation("MessageFromStaff")
   received_messages CommunicationRecipient[] @relation("MessageToStaff")
+  notifications    Notification[] @relation("NotificationToStaff")
   
   @@map("staff")
 }
@@ -1475,7 +1490,43 @@ model StaffEvaluation {
   @@map("staff_evaluations")
 }
 
-// 33. COMMUNICATION MESSAGE TABLE - Internal communications
+// 33. MESSAGE TEMPLATE TABLE - Templates for common messages
+model MessageTemplate {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Template Details
+  name            String
+  category        String   // WELCOME, CHECKOUT, SERVICE, EMERGENCY, POLICY, PROMOTION
+  type            String   // GUEST, STAFF, BOTH
+  subject         String
+  content         String   @db.Text
+  
+  // Personalization
+  variables       Json?    // JSON object with placeholder variables
+  language        String   @default("es") // es, en, fr, etc.
+  
+  // Usage
+  is_active       Boolean  @default(true)
+  is_automatic    Boolean  @default(false) // Auto-send on certain events
+  trigger_event   String?  // CHECK_IN, CHECK_OUT, SERVICE_REQUEST, etc.
+  
+  // Timing
+  send_delay_hours Int     @default(0) // Hours after trigger event
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  
+  // Relations
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  messages        CommunicationMessage[]
+  
+  @@map("message_templates")
+}
+
+// 34. COMMUNICATION MESSAGE TABLE - Internal and guest communications
 model CommunicationMessage {
   id              String   @id @default(cuid())
   hotel_id        String
@@ -1484,20 +1535,28 @@ model CommunicationMessage {
   subject         String
   message         String   @db.Text
   priority        String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
-  category        String   @default("GENERAL") // GENERAL, ANNOUNCEMENT, POLICY, TRAINING, EMERGENCY
+  category        String   @default("GENERAL") // GENERAL, ANNOUNCEMENT, POLICY, TRAINING, EMERGENCY, GUEST_SERVICE
   
   // Sender and Recipients
   sender_id       String?  // Staff ID of sender
   sender_name     String   // Name to display
-  sender_type     String   @default("STAFF") // STAFF, SYSTEM, MANAGEMENT
+  sender_type     String   @default("STAFF") // STAFF, SYSTEM, MANAGEMENT, GUEST
+  
+  // Guest Communication
+  guest_id        String?  // For guest communications
+  reservation_id  String?  // Associated reservation
   
   // Targeting
   department      String?  // Send to specific department
   position        String?  // Send to specific position
   send_to_all     Boolean  @default(false)
   
+  // Template
+  template_id     String?  // If created from template
+  template_variables Json? // Variables used for personalization
+  
   // Delivery
-  delivery_method String   @default("INTERNAL") // INTERNAL, EMAIL, SMS, PUSH
+  delivery_method String   @default("INTERNAL") // INTERNAL, EMAIL, SMS, PUSH, PORTAL
   scheduled_send  DateTime?
   sent_at         DateTime?
   
@@ -1505,7 +1564,7 @@ model CommunicationMessage {
   attachments     Json?    // Array of file URLs
   
   // Status
-  status          String   @default("DRAFT") // DRAFT, SENT, DELIVERED, READ
+  status          String   @default("DRAFT") // DRAFT, SENT, DELIVERED, READ, FAILED
   expires_at      DateTime?
   
   // Engagement
@@ -1524,7 +1583,11 @@ model CommunicationMessage {
   // Relations
   hotel           Hotel                      @relation(fields: [hotel_id], references: [id])
   sender_staff    Staff?                     @relation("MessageFromStaff", fields: [sender_id], references: [id])
+  guest           Guest?                     @relation("MessageFromGuest", fields: [guest_id], references: [id])
+  reservation     Reservation?               @relation("MessageToReservation", fields: [reservation_id], references: [id])
+  template        MessageTemplate?           @relation(fields: [template_id], references: [id])
   recipients      CommunicationRecipient[]
+  guest_recipients GuestCommunicationRecipient[]
   parent_message  CommunicationMessage?      @relation("MessageThread", fields: [parent_message_id], references: [id])
   replies         CommunicationMessage[]     @relation("MessageThread")
   
@@ -1532,6 +1595,7 @@ model CommunicationMessage {
 }
 
 // 34. COMMUNICATION RECIPIENT TABLE - Message delivery tracking
+// 35. COMMUNICATION RECIPIENT TABLE - Staff recipients
 model CommunicationRecipient {
   id              String   @id @default(cuid())
   hotel_id        String
@@ -1561,4 +1625,87 @@ model CommunicationRecipient {
   
   @@unique([message_id, staff_id])
   @@map("communication_recipients")
+}
+
+// 36. GUEST COMMUNICATION RECIPIENT TABLE - Guest recipients
+model GuestCommunicationRecipient {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  message_id      String
+  guest_id        String
+  reservation_id  String?
+  
+  // Delivery Status
+  delivered_at    DateTime?
+  read_at         DateTime?
+  acknowledged_at DateTime?
+  
+  // Response
+  replied_at      DateTime?
+  reply_message   String?
+  
+  // Contact Method
+  contact_method  String   @default("PORTAL") // PORTAL, EMAIL, SMS, PHONE
+  contact_value   String?  // Email or phone number used
+  
+  // Status
+  status          String   @default("PENDING") // PENDING, DELIVERED, READ, ACKNOWLEDGED, FAILED
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  hotel           Hotel                @relation(fields: [hotel_id], references: [id])
+  message         CommunicationMessage @relation(fields: [message_id], references: [id])
+  guest           Guest                @relation("MessageToGuest", fields: [guest_id], references: [id])
+  reservation     Reservation?         @relation("MessageToGuestReservation", fields: [reservation_id], references: [id])
+  
+  @@unique([message_id, guest_id])
+  @@map("guest_communication_recipients")
+}
+
+// 37. NOTIFICATION TABLE - System notifications and alerts
+model Notification {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Notification Details
+  title           String
+  message         String   @db.Text
+  type            String   // INFO, WARNING, ALERT, SUCCESS, ERROR
+  category        String   // SYSTEM, GUEST, STAFF, MAINTENANCE, BOOKING
+  
+  // Recipient
+  recipient_type  String   // STAFF, GUEST, ALL
+  recipient_id    String?  // Staff or Guest ID
+  
+  // Event Details
+  source_type     String?  // RESERVATION, ROOM, MAINTENANCE, SYSTEM
+  source_id       String?  // ID of the source entity
+  
+  // Delivery
+  delivery_method String   @default("PUSH") // PUSH, EMAIL, SMS, PORTAL
+  is_read         Boolean  @default(false)
+  read_at         DateTime?
+  
+  // Action
+  action_url      String?  // URL to navigate to when clicked
+  action_data     Json?    // Additional data for the action
+  
+  // Auto-dismiss
+  expires_at      DateTime?
+  auto_dismiss    Boolean  @default(false)
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  
+  // Relations
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  staff           Staff?   @relation("NotificationToStaff", fields: [recipient_id], references: [id], map: "notification_staff_fkey")
+  guest           Guest?   @relation("NotificationToGuest", fields: [recipient_id], references: [id], map: "notification_guest_fkey")
+  
+  @@map("notifications")
 }

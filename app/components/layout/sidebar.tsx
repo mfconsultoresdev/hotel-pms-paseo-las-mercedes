@@ -23,6 +23,8 @@ import {
   Wallet,
   CreditCard,
   Sparkles,
+  MessageSquare,
+  FileText,
   UserCog,
   Clock
 } from 'lucide-react'
@@ -87,6 +89,18 @@ const navigation = [
     href: '/schedules',
     icon: Clock,
     description: 'Turnos y horarios del personal'
+  },
+  {
+    name: 'Comunicaciones',
+    href: '/communications',
+    icon: MessageSquare,
+    description: 'Centro de comunicaciones y mensajería'
+  },
+  {
+    name: 'Plantillas',
+    href: '/communication-templates',
+    icon: FileText,
+    description: 'Plantillas de mensajes y comunicación'
   },
   {
     name: 'Facturación',
