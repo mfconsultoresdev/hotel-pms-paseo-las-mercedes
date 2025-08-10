@@ -61,10 +61,10 @@ const navigation = [
     description: 'Proceso de salida'
   },
   {
-    name: 'POS',
-    href: '/pos',
+    name: 'Servicios',
+    href: '/services',
     icon: ShoppingCart,
-    description: 'Punto de venta y servicios'
+    description: 'Gestión de servicios del hotel'
   },
   {
     name: 'Reportes',

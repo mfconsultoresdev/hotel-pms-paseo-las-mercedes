@@ -74,6 +74,9 @@ model Hotel {
   guests      Guest[]
   reservations Reservation[]
   transactions Transaction[]
+  check_ins   CheckIn[]
+  check_outs  CheckOut[]
+  service_requests ServiceRequest[]
 
   @@map("hotels")
 }
@@ -224,6 +227,9 @@ model Room {
   room_type   RoomType  @relation(fields: [room_type_id], references: [id])
   reservations Reservation[]
   transactions Transaction[]
+  check_ins   CheckIn[]
+  check_outs  CheckOut[]
+  service_requests ServiceRequest[]
 
   @@unique([hotel_id, room_number])
   @@map("rooms")
@@ -267,6 +273,9 @@ model Guest {
   hotel       Hotel    @relation(fields: [hotel_id], references: [id])
   reservations Reservation[]
   transactions Transaction[]
+  check_ins   CheckIn[]
+  check_outs  CheckOut[]
+  service_requests ServiceRequest[]
 
   @@unique([hotel_id, email])
   @@unique([hotel_id, document_type, document_number])
@@ -301,6 +310,7 @@ model Service {
   // Relations
   hotel       Hotel    @relation(fields: [hotel_id], references: [id])
   transactions Transaction[]
+  service_requests ServiceRequest[]
 
   @@map("services")
 }
@@ -355,6 +365,9 @@ model Reservation {
   check_in_user   User?    @relation("CheckInBy", fields: [check_in_by], references: [id])
   check_out_user  User?    @relation("CheckOutBy", fields: [check_out_by], references: [id])
   transactions    Transaction[]
+  check_ins       CheckIn[]
+  check_outs      CheckOut[]
+  service_requests ServiceRequest[]
 
   @@map("reservations")
 }
@@ -399,4 +412,117 @@ model Transaction {
   creator     User     @relation("TransactionCreatedBy", fields: [created_by], references: [id])
 
   @@map("transactions")
+}
+
+// 11. CHECK-IN RECORDS TABLE
+model CheckIn {
+  id            String      @id @default(cuid())
+  hotel_id      String
+  reservation_id String
+  guest_id      String
+  room_id       String
+  
+  // Check-in details
+  check_in_time DateTime    @default(now())
+  key_cards     Int         @default(1)
+  notes         String?
+  checked_in_by String
+  
+  // Special requirements
+  early_checkin Boolean     @default(false)
+  deposit_paid  Boolean     @default(false)
+  deposit_amount Decimal?   @db.Decimal(10,2)
+  
+  // Audit fields
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  // Relations
+  hotel         Hotel       @relation(fields: [hotel_id], references: [id])
+  reservation   Reservation @relation(fields: [reservation_id], references: [id])
+  guest         Guest       @relation(fields: [guest_id], references: [id])
+  room          Room        @relation(fields: [room_id], references: [id])
+
+  @@map("check_ins")
+}
+
+// 12. CHECK-OUT RECORDS TABLE
+model CheckOut {
+  id               String      @id @default(cuid())
+  hotel_id         String
+  reservation_id   String
+  guest_id         String
+  room_id          String
+  
+  // Check-out details
+  check_out_time   DateTime    @default(now())
+  total_charges    Decimal     @db.Decimal(10,2)
+  key_cards_returned Boolean   @default(true)
+  room_condition   String      @default("needs_cleaning") // clean, needs_cleaning, maintenance_required
+  notes            String?
+  checked_out_by   String
+  
+  // Charges breakdown
+  room_charges     Decimal?    @db.Decimal(10,2)
+  service_charges  Decimal?    @db.Decimal(10,2)
+  tax_amount       Decimal?    @db.Decimal(10,2)
+  
+  // Special cases
+  late_checkout    Boolean     @default(false)
+  damages_reported Boolean     @default(false)
+  damage_cost      Decimal?    @db.Decimal(10,2)
+  
+  // Audit fields
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+
+  // Relations
+  hotel            Hotel       @relation(fields: [hotel_id], references: [id])
+  reservation      Reservation @relation(fields: [reservation_id], references: [id])
+  guest            Guest       @relation(fields: [guest_id], references: [id])
+  room             Room        @relation(fields: [room_id], references: [id])
+
+  @@map("check_outs")
+}
+
+// 13. SERVICE REQUESTS TABLE
+model ServiceRequest {
+  id            String   @id @default(cuid())
+  hotel_id      String
+  guest_id      String
+  service_id    String
+  room_id       String?
+  reservation_id String?
+  
+  // Request details
+  quantity      Int      @default(1)
+  notes         String?
+  requested_time DateTime @default(now())
+  completed_time DateTime?
+  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  priority      String   @default("NORMAL")  // LOW, NORMAL, HIGH, URGENT
+  
+  // Pricing
+  unit_price    Decimal? @db.Decimal(10,2)
+  total_amount  Decimal? @db.Decimal(10,2)
+  currency      String   @default("USD")
+  
+  // Assignment
+  assigned_to   String?  // Staff member assigned
+  department    String?  // Department handling the request
+  
+  // Audit fields
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  created_by    String?
+  updated_by    String?
+
+  // Relations
+  hotel         Hotel       @relation(fields: [hotel_id], references: [id])
+  guest         Guest       @relation(fields: [guest_id], references: [id])
+  service       Service     @relation(fields: [service_id], references: [id])
+  room          Room?       @relation(fields: [room_id], references: [id])
+  reservation   Reservation? @relation(fields: [reservation_id], references: [id])
+
+  @@map("service_requests")
 }
