@@ -20,7 +20,9 @@ import {
   LogOut,
   Menu,
   ChevronLeft,
-  Wallet
+  Wallet,
+  CreditCard,
+  Sparkles
 } from 'lucide-react'
 
 const navigation = [
@@ -65,6 +67,18 @@ const navigation = [
     href: '/services',
     icon: ShoppingCart,
     description: 'Gestión de servicios del hotel'
+  },
+  {
+    name: 'Housekeeping',
+    href: '/housekeeping',
+    icon: Sparkles,
+    description: 'Limpieza y mantenimiento'
+  },
+  {
+    name: 'Facturación',
+    href: '/billing',
+    icon: CreditCard,
+    description: 'Facturas y pagos del hotel'
   },
   {
     name: 'Reportes',

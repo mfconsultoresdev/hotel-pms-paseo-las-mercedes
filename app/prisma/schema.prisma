@@ -77,6 +77,18 @@ model Hotel {
   check_ins   CheckIn[]
   check_outs  CheckOut[]
   service_requests ServiceRequest[]
+  invoices    Invoice[]
+  payments    Payment[]
+  payment_methods PaymentMethod[]
+  tax_config  TaxConfig[]
+  fiscal_periods FiscalPeriod[]
+  housekeeping_tasks HousekeepingTask[]
+  housekeeping_staff HousekeepingStaff[]
+  housekeeping_supplies HousekeepingSupply[]
+  housekeeping_supply_usage HousekeepingSupplyUsage[]
+  housekeeping_inventory_movements HousekeepingInventoryMovement[]
+  housekeeping_attendance HousekeepingAttendance[]
+  room_inspections RoomInspection[]
 
   @@map("hotels")
 }
@@ -139,6 +151,7 @@ model User {
   checkins_created     Reservation[] @relation("CheckInBy")
   checkouts_created    Reservation[] @relation("CheckOutBy")
   transactions_created Transaction[] @relation("TransactionCreatedBy")
+  housekeeping_staff   HousekeepingStaff?
 
   @@map("users")
 }
@@ -230,6 +243,9 @@ model Room {
   check_ins   CheckIn[]
   check_outs  CheckOut[]
   service_requests ServiceRequest[]
+  invoice_items InvoiceItem[]
+  housekeeping_tasks HousekeepingTask[]
+  room_inspections RoomInspection[]
 
   @@unique([hotel_id, room_number])
   @@map("rooms")
@@ -276,6 +292,8 @@ model Guest {
   check_ins   CheckIn[]
   check_outs  CheckOut[]
   service_requests ServiceRequest[]
+  invoices    Invoice[]
+  payments    Payment[]
 
   @@unique([hotel_id, email])
   @@unique([hotel_id, document_type, document_number])
@@ -311,6 +329,7 @@ model Service {
   hotel       Hotel    @relation(fields: [hotel_id], references: [id])
   transactions Transaction[]
   service_requests ServiceRequest[]
+  invoice_items InvoiceItem[]
 
   @@map("services")
 }
@@ -368,6 +387,9 @@ model Reservation {
   check_ins       CheckIn[]
   check_outs      CheckOut[]
   service_requests ServiceRequest[]
+  invoices        Invoice[]
+  payments        Payment[]
+  housekeeping_tasks HousekeepingTask[]
 
   @@map("reservations")
 }
@@ -525,4 +547,646 @@ model ServiceRequest {
   reservation   Reservation? @relation(fields: [reservation_id], references: [id])
 
   @@map("service_requests")
+}
+
+// 14. INVOICES TABLE - Facturación electrónica
+model Invoice {
+  id                String   @id @default(cuid())
+  invoice_number    String   @unique  // Numeración secuencial legal
+  hotel_id          String
+  
+  // Invoice details
+  invoice_date      DateTime @default(now())
+  due_date          DateTime?
+  issue_date        DateTime @default(now())
+  
+  // Client information (can be guest or company)
+  client_type       String   @default("GUEST") // GUEST, COMPANY, WALK_IN
+  guest_id          String?
+  company_name      String?
+  client_document   String?  // RIF, CI, Passport
+  client_address    String?
+  client_phone      String?
+  client_email      String?
+  
+  // Financial information
+  currency          String   @default("USD")
+  subtotal          Decimal  @db.Decimal(12,2)
+  tax_amount        Decimal  @db.Decimal(12,2) @default(0)
+  discount_amount   Decimal  @db.Decimal(12,2) @default(0)
+  total_amount      Decimal  @db.Decimal(12,2)
+  
+  // Tax breakdown
+  iva_rate          Decimal  @db.Decimal(5,2) @default(16.00) // Venezuela IVA 16%
+  iva_amount        Decimal  @db.Decimal(12,2) @default(0)
+  municipal_tax_rate Decimal @db.Decimal(5,2) @default(0)
+  municipal_tax_amount Decimal @db.Decimal(12,2) @default(0)
+  service_tax_rate  Decimal  @db.Decimal(5,2) @default(0)
+  service_tax_amount Decimal @db.Decimal(12,2) @default(0)
+  
+  // Status and control
+  status            String   @default("PENDING") // PENDING, SENT, PAID, OVERDUE, CANCELLED
+  payment_status    String   @default("UNPAID") // UNPAID, PARTIAL, PAID, REFUNDED
+  payment_terms     String   @default("IMMEDIATE") // IMMEDIATE, NET_15, NET_30
+  
+  // Legal information (Venezuelan requirements)
+  control_number    String?  // Número de control
+  tax_period        String?  // Período fiscal
+  is_tax_exempt     Boolean  @default(false)
+  tax_exempt_reason String?
+  
+  // References
+  reservation_id    String?
+  
+  // Notes and observations
+  notes             String?
+  internal_notes    String?  // Internal use only
+  terms_conditions  String?
+  
+  // PDF and electronic invoice
+  pdf_url           String?  // URL to generated PDF
+  xml_data          Json?    // Electronic invoice data
+  hash_code         String?  // Digital signature
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String
+  updated_by        String?
+  
+  // Relations
+  hotel             Hotel    @relation(fields: [hotel_id], references: [id])
+  guest             Guest?   @relation(fields: [guest_id], references: [id])
+  reservation       Reservation? @relation(fields: [reservation_id], references: [id])
+  invoice_items     InvoiceItem[]
+  payments          Payment[]
+  
+  @@map("invoices")
+}
+
+// 15. INVOICE ITEMS TABLE - Líneas de factura
+model InvoiceItem {
+  id            String   @id @default(cuid())
+  invoice_id    String
+  
+  // Item details
+  line_number   Int      // Order in invoice
+  description   String
+  quantity      Decimal  @db.Decimal(10,2) @default(1)
+  unit_price    Decimal  @db.Decimal(12,2)
+  line_total    Decimal  @db.Decimal(12,2)
+  
+  // Tax information per line
+  is_taxable    Boolean  @default(true)
+  tax_rate      Decimal  @db.Decimal(5,2) @default(16.00)
+  tax_amount    Decimal  @db.Decimal(12,2) @default(0)
+  
+  // References
+  service_id    String?  // If linked to a service
+  room_id       String?  // If room charge
+  
+  // Item categorization
+  item_type     String   @default("SERVICE") // ROOM, SERVICE, PRODUCT, DISCOUNT, TAX
+  category      String?  // For reporting purposes
+  
+  // Audit fields
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  invoice       Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  service       Service? @relation(fields: [service_id], references: [id])
+  room          Room?    @relation(fields: [room_id], references: [id])
+  
+  @@map("invoice_items")
+}
+
+// 16. PAYMENTS TABLE - Registro de pagos
+model Payment {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  payment_number    String   @unique  // Payment reference number
+  
+  // Payment details
+  payment_date      DateTime @default(now())
+  amount            Decimal  @db.Decimal(12,2)
+  currency          String   @default("USD")
+  
+  // Exchange rate for foreign currencies
+  exchange_rate     Decimal? @db.Decimal(10,6)
+  amount_local      Decimal? @db.Decimal(12,2) // Amount in hotel's local currency
+  
+  // Payment method details
+  payment_method    String   // CASH, CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, ZELLE, PAYPAL, CRYPTO
+  payment_gateway   String?  // stripe, paypal, manual, etc.
+  gateway_transaction_id String? // External transaction ID
+  
+  // Card/Bank details (if applicable)
+  card_last_four    String?
+  card_brand        String?  // visa, mastercard, etc.
+  bank_name         String?
+  account_number    String?  // Last 4 digits only
+  authorization_code String?
+  
+  // Crypto details (if applicable)
+  crypto_currency   String?  // BTC, ETH, USDT, etc.
+  wallet_address    String?
+  blockchain_hash   String?
+  
+  // Status and control
+  status            String   @default("COMPLETED") // PENDING, COMPLETED, FAILED, REFUNDED
+  reconciled        Boolean  @default(false)
+  reconciled_date   DateTime?
+  
+  // References
+  invoice_id        String?
+  reservation_id    String?
+  guest_id          String?
+  
+  // Additional information
+  reference_number  String?  // Bank reference, check number, etc.
+  notes             String?
+  receipt_url       String?  // URL to receipt/voucher
+  
+  // Refund information
+  refund_amount     Decimal? @db.Decimal(12,2)
+  refund_date       DateTime?
+  refund_reason     String?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String
+  updated_by        String?
+  processed_by      String?  // Who processed the payment
+  
+  // Relations
+  hotel             Hotel       @relation(fields: [hotel_id], references: [id])
+  invoice           Invoice?    @relation(fields: [invoice_id], references: [id])
+  reservation       Reservation? @relation(fields: [reservation_id], references: [id])
+  guest             Guest?      @relation(fields: [guest_id], references: [id])
+  
+  @@map("payments")
+}
+
+// 17. PAYMENT METHODS TABLE - Configuración de métodos de pago
+model PaymentMethod {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Method details
+  name            String   // "Efectivo USD", "Tarjeta Visa", "Zelle", etc.
+  type            String   // CASH, CREDIT_CARD, BANK_TRANSFER, DIGITAL_WALLET, CRYPTO
+  code            String   // Unique identifier
+  
+  // Configuration
+  is_active       Boolean  @default(true)
+  requires_approval Boolean @default(false)
+  min_amount      Decimal? @db.Decimal(12,2)
+  max_amount      Decimal? @db.Decimal(12,2)
+  
+  // Processing fees
+  fee_type        String?  @default("NONE") // NONE, FIXED, PERCENTAGE
+  fee_amount      Decimal? @db.Decimal(12,2) @default(0)
+  fee_percentage  Decimal? @db.Decimal(5,2) @default(0)
+  
+  // Gateway configuration
+  gateway_name    String?  // stripe, paypal, etc.
+  gateway_config  Json?    // Gateway-specific configuration
+  
+  // Display settings
+  display_order   Int      @default(0)
+  icon_url        String?
+  description     String?
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  updated_by      String?
+  
+  // Relations
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  
+  @@unique([hotel_id, code])
+  @@map("payment_methods")
+}
+
+// 18. TAX CONFIGURATION TABLE - Configuración de impuestos
+model TaxConfig {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Tax details
+  name            String   // "IVA", "Tasa Municipal", "Impuesto al Turismo"
+  type            String   // IVA, MUNICIPAL, SERVICE, TOURISM, OTHER
+  rate            Decimal  @db.Decimal(5,2) // Percentage rate
+  
+  // Application rules
+  is_active       Boolean  @default(true)
+  is_inclusive    Boolean  @default(false) // If tax is included in price
+  applies_to      Json?    // Rules for when tax applies
+  
+  // Legal information
+  tax_authority   String?  // SENIAT, Municipality, etc.
+  legal_reference String?  // Law or regulation reference
+  
+  // Date ranges
+  effective_from  DateTime @default(now())
+  effective_to    DateTime?
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  updated_by      String?
+  
+  // Relations
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  
+  @@map("tax_config")
+}
+
+// 19. FISCAL PERIODS TABLE - Períodos fiscales
+model FiscalPeriod {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Period details
+  name            String   // "Enero 2024", "Q1 2024"
+  period_type     String   // MONTHLY, QUARTERLY, YEARLY
+  start_date      DateTime
+  end_date        DateTime
+  
+  // Status
+  is_closed       Boolean  @default(false)
+  closed_date     DateTime?
+  closed_by       String?
+  
+  // Financial summary
+  total_revenue   Decimal? @db.Decimal(15,2)
+  total_taxes     Decimal? @db.Decimal(15,2)
+  total_discounts Decimal? @db.Decimal(15,2)
+  invoice_count   Int?     @default(0)
+  
+  // Audit fields
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  updated_by      String?
+  
+  // Relations
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  
+  @@unique([hotel_id, start_date, end_date])
+  @@map("fiscal_periods")
+}
+
+// HOUSEKEEPING MODULE MODELS
+
+// 20. HOUSEKEEPING TASKS TABLE - Tareas de limpieza
+model HousekeepingTask {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  room_id           String
+  
+  // Task details
+  task_type         String   // CHECKOUT_CLEANING, MAINTENANCE_CLEANING, DEEP_CLEANING, INSPECTION, MAINTENANCE
+  priority          String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  status            String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, SKIPPED, CANCELLED
+  
+  // Assignment
+  assigned_to       String?  // Staff member ID
+  assigned_date     DateTime?
+  started_date      DateTime?
+  completed_date    DateTime?
+  
+  // Task details
+  description       String?
+  special_instructions String?
+  estimated_duration Int?   // Minutes
+  actual_duration    Int?   // Minutes
+  
+  // Quality control
+  inspected_by      String?
+  inspection_date   DateTime?
+  inspection_status String? // PASSED, FAILED, NEEDS_REWORK
+  inspection_notes  String?
+  
+  // Related records
+  checkout_id       String? // If triggered by checkout
+  reservation_id    String?
+  
+  // Credits and performance
+  credits_earned    Decimal? @db.Decimal(8,2) @default(0) // For staff performance tracking
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  // Relations
+  hotel             Hotel    @relation(fields: [hotel_id], references: [id])
+  room              Room     @relation(fields: [room_id], references: [id])
+  reservation       Reservation? @relation(fields: [reservation_id], references: [id])
+  task_items        HousekeepingTaskItem[]
+  supply_usage      HousekeepingSupplyUsage[]
+  room_inspections  RoomInspection[]
+  
+  @@map("housekeeping_tasks")
+}
+
+// 21. HOUSEKEEPING TASK ITEMS TABLE - Items específicos de cada tarea
+model HousekeepingTaskItem {
+  id                String   @id @default(cuid())
+  task_id           String
+  
+  // Item details
+  item_name         String   // "Clean bathroom", "Change bedsheets", "Vacuum floor"
+  description       String?
+  is_required       Boolean  @default(true)
+  
+  // Completion tracking
+  is_completed      Boolean  @default(false)
+  completed_by      String?
+  completed_date    DateTime?
+  notes             String?
+  
+  // Quality issues
+  has_issue         Boolean  @default(false)
+  issue_description String?
+  issue_severity    String?  // LOW, MEDIUM, HIGH
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  // Relations
+  task              HousekeepingTask @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  
+  @@map("housekeeping_task_items")
+}
+
+// 22. HOUSEKEEPING STAFF TABLE - Personal de limpieza
+model HousekeepingStaff {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  user_id           String   @unique // Links to User model
+  
+  // Staff details
+  employee_code     String   @unique
+  shift_start       String   // "06:00" format
+  shift_end         String   // "14:00" format
+  days_of_week      Json     // Array of working days ["MON", "TUE", "WED"]
+  
+  // Skills and certifications
+  skill_level       String   @default("JUNIOR") // TRAINEE, JUNIOR, SENIOR, SUPERVISOR
+  certifications    Json?    // Array of certifications
+  languages         Json?    // Languages spoken
+  
+  // Performance tracking
+  tasks_completed   Int      @default(0)
+  avg_task_time     Int?     // Average minutes per task
+  quality_rating    Decimal? @db.Decimal(3,2) // 0.00 to 5.00
+  total_credits     Decimal  @db.Decimal(10,2) @default(0)
+  
+  // Status
+  is_active         Boolean  @default(true)
+  is_available      Boolean  @default(true)
+  current_location  String?  // Current room or area
+  
+  // Contact and emergency
+  emergency_contact String?
+  emergency_phone   String?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  // Relations
+  hotel             Hotel    @relation(fields: [hotel_id], references: [id])
+  user              User     @relation(fields: [user_id], references: [id])
+  supply_usage      HousekeepingSupplyUsage[]
+  attendance        HousekeepingAttendance[]
+  
+  @@map("housekeeping_staff")
+}
+
+// 23. HOUSEKEEPING SUPPLIES TABLE - Suministros de limpieza
+model HousekeepingSupply {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  
+  // Supply details
+  name              String
+  description       String?
+  category          String   // CLEANING, LINENS, AMENITIES, MAINTENANCE, OTHER
+  unit_type         String   // PIECE, LITER, KG, BOTTLE, PACK
+  
+  // Inventory tracking
+  current_stock     Decimal  @db.Decimal(10,2) @default(0)
+  minimum_stock     Decimal  @db.Decimal(10,2) @default(0)
+  maximum_stock     Decimal? @db.Decimal(10,2)
+  unit_cost         Decimal? @db.Decimal(10,2)
+  
+  // Supply details
+  supplier_name     String?
+  supplier_contact  String?
+  brand             String?
+  expiry_date       DateTime?
+  
+  // Status
+  is_active         Boolean  @default(true)
+  needs_reorder     Boolean  @default(false)
+  
+  // Storage
+  storage_location  String?
+  storage_requirements String?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  // Relations
+  hotel             Hotel    @relation(fields: [hotel_id], references: [id])
+  usage_records     HousekeepingSupplyUsage[]
+  inventory_movements HousekeepingInventoryMovement[]
+  
+  @@map("housekeeping_supplies")
+}
+
+// 24. HOUSEKEEPING SUPPLY USAGE TABLE - Uso de suministros
+model HousekeepingSupplyUsage {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  supply_id         String
+  task_id           String?
+  staff_id          String?
+  
+  // Usage details
+  quantity_used     Decimal  @db.Decimal(10,2)
+  usage_date        DateTime @default(now())
+  room_number       String?
+  
+  // Cost tracking
+  unit_cost         Decimal? @db.Decimal(10,2)
+  total_cost        Decimal? @db.Decimal(10,2)
+  
+  // Notes
+  notes             String?
+  usage_reason      String?  // CLEANING, MAINTENANCE, RESTOCKING, WASTE
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  created_by        String?
+  
+  // Relations
+  hotel             Hotel              @relation(fields: [hotel_id], references: [id])
+  supply            HousekeepingSupply @relation(fields: [supply_id], references: [id])
+  task              HousekeepingTask?  @relation(fields: [task_id], references: [id])
+  staff             HousekeepingStaff? @relation(fields: [staff_id], references: [id])
+  
+  @@map("housekeeping_supply_usage")
+}
+
+// 25. HOUSEKEEPING INVENTORY MOVEMENTS TABLE - Movimientos de inventario
+model HousekeepingInventoryMovement {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  supply_id         String
+  
+  // Movement details
+  movement_type     String   // IN, OUT, ADJUSTMENT, TRANSFER, WASTE
+  quantity          Decimal  @db.Decimal(10,2)
+  previous_stock    Decimal  @db.Decimal(10,2)
+  new_stock         Decimal  @db.Decimal(10,2)
+  
+  // Cost information
+  unit_cost         Decimal? @db.Decimal(10,2)
+  total_value       Decimal? @db.Decimal(10,2)
+  
+  // Reference information
+  reference_type    String?  // PURCHASE, USAGE, ADJUSTMENT, TRANSFER
+  reference_number  String?  // Purchase order, task ID, etc.
+  supplier_name     String?
+  
+  // Location and reason
+  location_from     String?
+  location_to       String?
+  reason            String?
+  notes             String?
+  
+  // Approval
+  approved_by       String?
+  approved_date     DateTime?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  created_by        String?
+  
+  // Relations
+  hotel             Hotel              @relation(fields: [hotel_id], references: [id])
+  supply            HousekeepingSupply @relation(fields: [supply_id], references: [id])
+  
+  @@map("housekeeping_inventory_movements")
+}
+
+// 26. HOUSEKEEPING ATTENDANCE TABLE - Asistencia del personal
+model HousekeepingAttendance {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  staff_id          String
+  
+  // Attendance details
+  date              DateTime @db.Date
+  clock_in          DateTime?
+  clock_out         DateTime?
+  break_start       DateTime?
+  break_end         DateTime?
+  
+  // Hours worked
+  scheduled_hours   Decimal? @db.Decimal(4,2) // 8.00 hours
+  actual_hours      Decimal? @db.Decimal(4,2)
+  overtime_hours    Decimal? @db.Decimal(4,2)
+  break_minutes     Int?     @default(30)
+  
+  // Status
+  status            String   @default("PRESENT") // PRESENT, ABSENT, LATE, SICK_LEAVE, VACATION
+  absence_reason    String?
+  is_excused        Boolean  @default(false)
+  
+  // Performance notes
+  notes             String?
+  rating            Int?     // 1-5 daily performance rating
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  // Relations
+  hotel             Hotel             @relation(fields: [hotel_id], references: [id])
+  staff             HousekeepingStaff @relation(fields: [staff_id], references: [id])
+  
+  @@unique([hotel_id, staff_id, date])
+  @@map("housekeeping_attendance")
+}
+
+// 27. ROOM INSPECTION TABLE - Inspecciones de habitaciones
+model RoomInspection {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  room_id           String
+  
+  // Inspection details
+  inspection_date   DateTime @default(now())
+  inspection_type   String   // CHECKOUT, MAINTENANCE, QUALITY, RANDOM
+  inspector_id      String   // Staff member who did inspection
+  
+  // Results
+  overall_status    String   // PASSED, FAILED, NEEDS_ATTENTION
+  overall_score     Int?     // 0-100 score
+  
+  // Inspection areas
+  bathroom_score    Int?     // 0-10
+  bedroom_score     Int?     // 0-10  
+  furniture_score   Int?     // 0-10
+  amenities_score   Int?     // 0-10
+  cleanliness_score Int?     // 0-10
+  
+  // Issues found
+  issues_found      Json?    // Array of issues
+  photos_urls       Json?    // Array of photo URLs
+  
+  // Follow-up
+  requires_followup Boolean  @default(false)
+  followup_notes    String?
+  corrected_date    DateTime?
+  corrected_by      String?
+  
+  // Related records
+  task_id           String?  // Related housekeeping task
+  checkout_id       String?  // If inspection after checkout
+  
+  // Notes
+  notes             String?
+  recommendations   String?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  
+  // Relations
+  hotel             Hotel             @relation(fields: [hotel_id], references: [id])
+  room              Room              @relation(fields: [room_id], references: [id])
+  task              HousekeepingTask? @relation(fields: [task_id], references: [id])
+  
+  @@map("room_inspections")
 }

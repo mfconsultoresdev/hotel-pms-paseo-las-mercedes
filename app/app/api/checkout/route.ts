@@ -94,11 +94,118 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Generate invoice automatically if charges exist
+    let invoice = null
+    if (totalCharges > 0) {
+      // Generate invoice number
+      const lastInvoice = await prisma.invoice.findFirst({
+        orderBy: { invoice_number: 'desc' }
+      })
+      
+      let nextNumber = 1
+      if (lastInvoice && lastInvoice.invoice_number) {
+        const lastNumber = parseInt(lastInvoice.invoice_number.split('-').pop() || '0')
+        nextNumber = lastNumber + 1
+      }
+      
+      const invoiceNumber = `PMS-${new Date().getFullYear()}-${String(nextNumber).padStart(6, '0')}`
+
+      // Calculate room charges and taxes
+      const subtotal = totalCharges
+      const ivaRate = 16.00 // Venezuelan IVA rate
+      const ivaAmount = subtotal * (ivaRate / 100)
+      const totalWithTax = subtotal + ivaAmount
+
+      // Create invoice items array
+      const invoiceItems: any[] = [
+        {
+          line_number: 1,
+          description: `Alojamiento - Hab. ${reservation.room.room_number} - ${reservation.nights} noche(s)`,
+          quantity: reservation.nights,
+          unit_price: Number(reservation.room_rate),
+          line_total: Number(reservation.room_rate) * reservation.nights,
+          is_taxable: true,
+          tax_rate: ivaRate,
+          tax_amount: (Number(reservation.room_rate) * reservation.nights) * (ivaRate / 100),
+          item_type: 'ROOM',
+          room_id: reservation.room_id
+        }
+      ]
+
+      // Add service charges if any
+      const serviceRequests = await prisma.serviceRequest.findMany({
+        where: {
+          reservation_id: reservationId,
+          status: 'COMPLETED'
+        },
+        include: {
+          service: true
+        }
+      })
+
+      let lineNumber = 2
+      serviceRequests.forEach(serviceRequest => {
+        if (serviceRequest.total_amount && serviceRequest.service) {
+          const serviceAmount = Number(serviceRequest.total_amount)
+          invoiceItems.push({
+            line_number: lineNumber++,
+            description: `${serviceRequest.service.name} - ${serviceRequest.quantity}x`,
+            quantity: serviceRequest.quantity,
+            unit_price: serviceAmount / serviceRequest.quantity,
+            line_total: serviceAmount,
+            is_taxable: true,
+            tax_rate: ivaRate,
+            tax_amount: serviceAmount * (ivaRate / 100),
+            item_type: 'SERVICE',
+            service_id: serviceRequest.service_id
+          })
+        }
+      })
+
+      // Recalculate totals including services
+      const finalSubtotal = invoiceItems.reduce((sum, item) => sum + item.line_total, 0)
+      const finalIvaAmount = finalSubtotal * (ivaRate / 100)
+      const finalTotal = finalSubtotal + finalIvaAmount
+
+      // Create the invoice
+      invoice = await prisma.invoice.create({
+        data: {
+          invoice_number: invoiceNumber,
+          hotel_id: reservation.hotel_id,
+          client_type: 'GUEST',
+          guest_id: reservation.guest_id,
+          reservation_id: reservationId,
+          client_document: reservation.guest.document_number,
+          client_address: reservation.guest.address,
+          client_phone: reservation.guest.phone,
+          client_email: reservation.guest.email,
+          currency: reservation.currency || 'USD',
+          subtotal: finalSubtotal,
+          tax_amount: finalIvaAmount,
+          total_amount: finalTotal,
+          iva_rate: ivaRate,
+          iva_amount: finalIvaAmount,
+          status: 'PENDING',
+          payment_status: 'UNPAID',
+          payment_terms: 'IMMEDIATE',
+          notes: `Factura generada automáticamente en check-out - ${notes || ''}`,
+          created_by: session.user?.id || '',
+          invoice_items: {
+            create: invoiceItems
+          }
+        },
+        include: {
+          invoice_items: true
+        }
+      })
+    }
+
     return NextResponse.json({
       success: true,
       checkOut: checkOutRecord,
+      invoice: invoice,
       totalCharges: totalCharges,
-      message: 'Check-out procesado exitosamente'
+      message: 'Check-out procesado exitosamente' + (invoice ? ' - Factura generada' : '')
     })
 
   } catch (error) {
