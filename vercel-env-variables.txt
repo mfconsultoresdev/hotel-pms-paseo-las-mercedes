@@ -1,0 +1,103 @@
+# ========================================
+# VARIABLES DE ENTORNO PARA VERCEL
+# ========================================
+# COPIA ESTAS VARIABLES EN TU DASHBOARD DE VERCEL
+# Settings > Environment Variables
+
+# ========================================
+# BASE DE DATOS SUPABASE (OBLIGATORIAS)
+# ========================================
+
+# Reemplaza [YOUR-PROJECT-REF] y [YOUR-PASSWORD] con tus datos reales
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+
+# ========================================
+# AUTENTICACIÓN (OBLIGATORIAS)
+# ========================================
+
+# Genera un secret único de 32 caracteres para producción
+NEXTAUTH_SECRET=tu_secret_produccion_aqui_minimo_32_caracteres_2024
+
+# Genera otro secret único para JWT
+JWT_SECRET=tu_jwt_secret_produccion_aqui_minimo_32_caracteres_2024
+
+# URL de tu aplicación en Vercel (cambiar después del deploy)
+NEXTAUTH_URL=https://[YOUR-APP-NAME].vercel.app
+
+# ========================================
+# CONFIGURACIÓN DE LA APLICACIÓN (OBLIGATORIAS)
+# ========================================
+
+# Entorno de producción
+NODE_ENV=production
+
+# URL pública de tu aplicación
+NEXT_PUBLIC_APP_URL=https://[YOUR-APP-NAME].vercel.app
+
+# URL de la API
+NEXT_PUBLIC_API_URL=https://[YOUR-APP-NAME].vercel.app/api
+
+# ========================================
+# CONFIGURACIÓN DEL HOTEL (OBLIGATORIAS)
+# ========================================
+
+# Información del hotel
+HOTEL_NAME=Hotel Paseo Las Mercedes
+HOTEL_ADDRESS=Dirección del Hotel
+HOTEL_PHONE=+1234567890
+HOTEL_EMAIL=info@hotel.com
+HOTEL_CURRENCY=USD
+HOTEL_TIMEZONE=America/Caracas
+
+# ========================================
+# SUPABASE (OPCIONALES - PARA FUNCIONALIDADES AVANZADAS)
+# ========================================
+
+# URL de tu proyecto Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://[YOUR-PROJECT-REF].supabase.co
+
+# Clave anónima de Supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR-ANON-KEY]
+
+# ========================================
+# PRISMA (OBLIGATORIAS PARA VERCEL)
+# ========================================
+
+# Generar cliente Prisma en Vercel
+PRISMA_GENERATE_DATAPROXY=true
+
+# ========================================
+# MONITOREO (OPCIONALES)
+# ========================================
+
+# Sentry para monitoreo de errores (opcional)
+NEXT_PUBLIC_SENTRY_DSN=[YOUR-SENTRY-DSN]
+
+# ========================================
+# INSTRUCCIONES DE CONFIGURACIÓN
+# ========================================
+
+# 1. Ve a tu dashboard de Vercel
+# 2. Selecciona tu proyecto
+# 3. Ve a Settings > Environment Variables
+# 4. Agrega cada variable una por una
+# 5. Asegúrate de que estén en "Production" y "Preview"
+# 6. Después de agregar todas, haz "Redeploy"
+
+# ========================================
+# VALORES A REEMPLAZAR
+# ========================================
+
+# [YOUR-PROJECT-REF] = Referencia de tu proyecto Supabase (ej: abc123def456)
+# [YOUR-PASSWORD] = Contraseña de tu base de datos Supabase
+# [YOUR-APP-NAME] = Nombre que le diste a tu app en Vercel
+# [YOUR-ANON-KEY] = Clave anónima de tu proyecto Supabase
+# [YOUR-SENTRY-DSN] = DSN de Sentry si usas monitoreo
+
+# ========================================
+# SECRETS GENERADOS AUTOMÁTICAMENTE
+# ========================================
+
+# NEXTAUTH_SECRET y JWT_SECRET ya están generados arriba
+# Puedes usar esos o generar nuevos con:
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"

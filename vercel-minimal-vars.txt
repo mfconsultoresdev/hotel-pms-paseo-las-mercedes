@@ -1,0 +1,82 @@
+# ========================================
+# VARIABLES MÍNIMAS PARA PRIMER DEPLOY EN VERCEL
+# ========================================
+# CONFIGURA ESTAS VARIABLES PRIMERO EN VERCEL
+
+# ========================================
+# 1. BASE DE DATOS (OBLIGATORIA)
+# ========================================
+
+# Reemplaza con tu DATABASE_URL de Supabase
+DATABASE_URL=postgresql://postgres:[TU-PASSWORD]@db.[TU-PROJECT-REF].supabase.co:5432/postgres
+
+# ========================================
+# 2. AUTENTICACIÓN (OBLIGATORIAS)
+# ========================================
+
+# Secret para NextAuth (usa el generado)
+NEXTAUTH_SECRET=hotel_pms_2024_production_secret_key_secure_32
+
+# Secret para JWT (usa el generado)
+JWT_SECRET=hotel_pms_jwt_production_secret_2024_secure_key
+
+# URL de tu app (cambiar después del deploy)
+NEXTAUTH_URL=https://[TU-APP-NAME].vercel.app
+
+# ========================================
+# 3. CONFIGURACIÓN BÁSICA (OBLIGATORIAS)
+# ========================================
+
+# Entorno de producción
+NODE_ENV=production
+
+# URL de la aplicación
+NEXT_PUBLIC_APP_URL=https://[TU-APP-NAME].vercel.app
+
+# ========================================
+# 4. PRISMA (OBLIGATORIA PARA VERCEL)
+# ========================================
+
+# Generar cliente Prisma en Vercel
+PRISMA_GENERATE_DATAPROXY=true
+
+# ========================================
+# INSTRUCCIONES PASO A PASO
+# ========================================
+
+# PASO 1: Crear proyecto en Supabase
+# - Ve a supabase.com
+# - Crea cuenta y nuevo proyecto
+# - Anota: PROJECT_REF y PASSWORD
+
+# PASO 2: Crear proyecto en Vercel
+# - Ve a vercel.com
+# - Crea cuenta con GitHub
+# - "New Project" → Selecciona tu repo
+# - Anota: APP_NAME
+
+# PASO 3: Configurar variables en Vercel
+# - Dashboard → Settings → Environment Variables
+# - Agrega cada variable del archivo
+# - Asegúrate de que estén en "Production"
+
+# PASO 4: Hacer deploy
+# - Vercel hará deploy automáticamente
+# - Si falla, revisa los logs
+# - Verifica que las variables estén correctas
+
+# ========================================
+# VALORES A REEMPLAZAR
+# ========================================
+
+# [TU-PASSWORD] = Contraseña de tu DB Supabase
+# [TU-PROJECT-REF] = Referencia de tu proyecto Supabase
+# [TU-APP-NAME] = Nombre de tu app en Vercel
+
+# ========================================
+# EJEMPLO COMPLETO
+# ========================================
+
+# DATABASE_URL=postgresql://postgres:mipassword123@db.abc123def456.supabase.co:5432/postgres
+# NEXTAUTH_URL=https://mi-hotel-pms.vercel.app
+# NEXT_PUBLIC_APP_URL=https://mi-hotel-pms.vercel.app

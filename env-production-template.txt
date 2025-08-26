@@ -1,0 +1,58 @@
+# ========================================
+# HOTEL PMS - VARIABLES DE ENTORNO PRODUCCIÓN
+# ========================================
+# COPIA ESTE CONTENIDO A .env.local
+
+# ========================================
+# BASE DE DATOS PRODUCCIÓN (SUPABASE)
+# ========================================
+
+# Configura estas variables con los valores de tu proyecto Supabase
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
+DATABASE_HOST=db.[YOUR-PROJECT-REF].supabase.co
+DATABASE_PORT=5432
+DATABASE_NAME=postgres
+DATABASE_USER=postgres
+DATABASE_PASSWORD=[YOUR-PASSWORD]
+DATABASE_SSL=true
+
+# ========================================
+# AUTENTICACIÓN
+# ========================================
+
+# NextAuth.js Configuration
+NEXTAUTH_URL=https://[YOUR-APP].vercel.app
+NEXTAUTH_SECRET=[GENERATE-A-RANDOM-32-CHAR-SECRET]
+
+# JWT Configuration
+JWT_SECRET=[GENERATE-ANOTHER-RANDOM-32-CHAR-SECRET]
+
+# ========================================
+# CONFIGURACIÓN DEL HOTEL
+# ========================================
+
+HOTEL_NAME="Hotel Paseo Las Mercedes"
+HOTEL_ADDRESS="Paseo Las Mercedes, Caracas, Venezuela"
+HOTEL_PHONE="+58 212 555-0123"
+HOTEL_EMAIL="info@hotelpaseolasmercedes.com"
+HOTEL_CURRENCY=USD
+HOTEL_TIMEZONE=America/Caracas
+
+# ========================================
+# CONFIGURACIÓN DE PRODUCCIÓN
+# ========================================
+
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://[YOUR-APP].vercel.app
+NEXT_PUBLIC_API_URL=https://[YOUR-APP].vercel.app/api
+
+# ========================================
+# NOTAS IMPORTANTES
+# ========================================
+
+# 1. Reemplaza [YOUR-PROJECT-REF] con tu referencia de proyecto Supabase
+# 2. Reemplaza [YOUR-PASSWORD] con tu contraseña de Supabase
+# 3. Reemplaza [YOUR-APP] con el nombre de tu aplicación en Vercel
+# 4. Genera secrets únicos para NEXTAUTH_SECRET y JWT_SECRET
+# 5. Para generar secrets: openssl rand -base64 32
+
