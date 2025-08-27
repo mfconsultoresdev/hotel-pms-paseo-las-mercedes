@@ -1,62 +1,98 @@
 # 🏨 Hotel PMS - Paseo Las Mercedes
 
-Sistema de Gestión Hotelera (Property Management System) completo y moderno para el Hotel Paseo Las Mercedes.
+Sistema de Gestión Hotelera (PMS) completo y moderno para el Hotel Paseo Las Mercedes.
 
 ## 🚀 Características
 
-- **Gestión de Reservas** - Sistema completo de reservas y check-in/check-out
-- **Gestión de Habitaciones** - Control de disponibilidad y estado de habitaciones
-- **Gestión de Personal** - Control de empleados, horarios y asistencia
-- **Gestión de Inventario** - Control de suministros y activos del hotel
-- **Sistema de Pagos** - Integración con Stripe para procesamiento de pagos
-- **Dashboard en Tiempo Real** - Métricas y estadísticas del hotel
-- **Sistema de Autenticación** - Seguridad robusta con NextAuth.js
-- **Base de Datos PostgreSQL** - Escalable y confiable
-- **API RESTful** - Backend robusto y bien estructurado
+- **Gestión de Reservas**: Sistema completo de reservas y disponibilidad
+- **Gestión de Huéspedes**: Perfiles detallados y historial de estancias
+- **Gestión de Habitaciones**: Control de estado y mantenimiento
+- **Facturación**: Sistema integrado de facturación y pagos
+- **Housekeeping**: Gestión de limpieza y mantenimiento
+- **Reportes**: Análisis y reportes en tiempo real
+- **Móvil**: Interfaz responsive y PWA
+- **Integraciones**: Stripe, PayPal, MercadoPago, etc.
 
 ## 🛠️ Tecnologías
 
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Base de Datos**: PostgreSQL
+- **Frontend**: Next.js 14, React, TypeScript
+- **Backend**: Next.js API Routes, Prisma
+- **Base de Datos**: PostgreSQL (Supabase)
 - **Autenticación**: NextAuth.js
-- **Estilos**: Tailwind CSS
-- **UI Components**: Radix UI
-- **Pagos**: Stripe
-- **Deploy**: Vercel + Supabase
+- **UI**: Tailwind CSS, Shadcn/ui
+- **Deploy**: Vercel
+- **Base de Datos**: Supabase
 
-## 📋 Requisitos
+## 📱 Funcionalidades Principales
 
-- Node.js 18+ 
-- npm o yarn
-- PostgreSQL (para desarrollo local)
+### 🏠 Dashboard
+- Métricas en tiempo real
+- Actividad reciente
+- Acciones rápidas
+- Estado del hotel
+
+### 👥 Gestión de Huéspedes
+- Registro y check-in
+- Perfiles detallados
+- Historial de estancias
+- Preferencias y notas
+
+### 🛏️ Gestión de Habitaciones
+- Estado en tiempo real
+- Tipos de habitación
+- Mantenimiento
+- Limpieza
+
+### 📅 Reservas
+- Calendario de disponibilidad
+- Gestión de reservas
+- Check-in/Check-out
+- Modificaciones
+
+### 💰 Facturación
+- Generación de facturas
+- Múltiples métodos de pago
+- Historial de transacciones
+- Reportes financieros
+
+### 🧹 Housekeeping
+- Gestión de tareas
+- Estado de limpieza
+- Inventario de suministros
+- Staff management
 
 ## 🚀 Instalación
 
-### 1. Clonar el repositorio
+### Prerrequisitos
+- Node.js 18+ 
+- npm o yarn
+- PostgreSQL (o Supabase)
+
+### Pasos
+1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/hotel-pms-paseo-las-mercedes.git
-cd hotel-pms-paseo-las-mercedes/app
+git clone https://github.com/[TU-USUARIO]/hotel-pms-paseo-las-mercedes.git
+cd hotel-pms-paseo-las-mercedes
 ```
 
-### 2. Instalar dependencias
+2. Instalar dependencias
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
+3. Configurar variables de entorno
 ```bash
-cp env.production.example .env.local
+cp env.example .env.local
 # Editar .env.local con tus credenciales
 ```
 
-### 4. Configurar base de datos
+4. Configurar base de datos
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
-### 5. Ejecutar en desarrollo
+5. Ejecutar en desarrollo
 ```bash
 npm run dev
 ```
@@ -64,48 +100,50 @@ npm run dev
 ## 🌐 Deploy
 
 ### Vercel + Supabase (Recomendado)
-1. Crear proyecto en [Supabase](https://supabase.com)
-2. Crear proyecto en [Vercel](https://vercel.com)
-3. Conectar repositorio de GitHub
-4. Configurar variables de entorno
-5. Deploy automático
+- **Hosting**: Vercel (gratis)
+- **Base de Datos**: Supabase (gratis)
+- **Guía completa**: [Ver documentación de deploy](GUIA_DEPLOY_COMPLETA_VERCEL_SUPABASE.md)
 
-## 📁 Estructura del Proyecto
+### Script automático
+```powershell
+.\scripts\deploy-vercel.ps1
+```
 
-```
-app/
-├── app/                    # Next.js App Router
-│   ├── api/              # API Routes
-│   ├── dashboard/        # Dashboard principal
-│   ├── reservations/     # Gestión de reservas
-│   ├── rooms/           # Gestión de habitaciones
-│   └── ...
-├── components/           # Componentes React reutilizables
-├── lib/                 # Utilidades y configuraciones
-├── prisma/              # Schema y migraciones de base de datos
-├── types/               # Tipos TypeScript
-└── public/              # Archivos estáticos
-```
+## 📚 Documentación
+
+- [Guía de Deploy](GUIA_DEPLOY_COMPLETA_VERCEL_SUPABASE.md)
+- [Checklist de Deploy](CHECKLIST_DEPLOY_VERCEL.md)
+- [Guía Gratuita](GUIA_DEPLOY_GRATUITO.md)
+- [Variables de Entorno](env.vercel.example)
+- [Crear Repositorio GitHub](GUIA_CREAR_REPOSITORIO_GITHUB.md)
 
 ## 🔧 Scripts Disponibles
 
-- `npm run dev` - Servidor de desarrollo
+- `npm run dev` - Desarrollo
 - `npm run build` - Build de producción
 - `npm run start` - Servidor de producción
-- `npm run lint` - Linting del código
-- `npm run db:generate` - Generar cliente Prisma
-- `npm run db:push` - Sincronizar base de datos
-- `npm run db:migrate` - Ejecutar migraciones
+- `npm run lint` - Linting
+- `npm run test` - Tests
+
+### Scripts de Automatización
+- `.\scripts\create-github-repo.ps1` - Crear repositorio en GitHub
+- `.\scripts\push-to-github.ps1` - Subir código a GitHub
+- `.\scripts\deploy-vercel.ps1` - Deploy automático en Vercel
 
 ## 📊 Estado del Proyecto
 
-- ✅ **Frontend**: Completado
-- ✅ **Backend API**: Completado
-- ✅ **Base de Datos**: Completado
-- ✅ **Autenticación**: Completado
-- ✅ **Deploy**: Configurado para Vercel
-- 🔄 **Testing**: En desarrollo
-- 🔄 **Documentación**: En progreso
+- ✅ **FASE 1**: Estructura base y autenticación
+- ✅ **FASE 2**: Gestión de huéspedes y habitaciones
+- ✅ **FASE 3**: Sistema de reservas
+- ✅ **FASE 4**: Facturación y pagos
+- ✅ **FASE 5**: Housekeeping
+- ✅ **FASE 6**: Reportes y analytics
+- ✅ **FASE 7**: Integraciones de terceros
+- ✅ **FASE 8**: Seguridad y compliance
+- ✅ **FASE 9**: Mobile optimization
+- ✅ **FASE 10**: Testing y QA
+- ✅ **FASE 11**: Monitoreo y observabilidad
+- 🚧 **FASE 12**: Deploy y producción
 
 ## 🤝 Contribuir
 
@@ -117,23 +155,23 @@ app/
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
-## 📞 Soporte
+## 📞 Contacto
 
-Para soporte técnico o preguntas:
-- 📧 Email: info@hotel.com
-- 📱 Teléfono: +1234567890
-- 🌐 Website: [hotel.com](https://hotel.com)
+- **Desarrollador**: [Tu Nombre]
+- **Email**: [tu-email@ejemplo.com]
+- **Proyecto**: [https://github.com/[TU-USUARIO]/hotel-pms-paseo-las-mercedes](https://github.com/[TU-USUARIO]/hotel-pms-paseo-las-mercedes)
 
 ## 🙏 Agradecimientos
 
 - Next.js por el framework increíble
-- Prisma por el ORM robusto
-- Vercel por la plataforma de deploy
-- Supabase por la base de datos PostgreSQL
+- Vercel por el hosting gratuito
+- Supabase por la base de datos gratuita
 - La comunidad de desarrolladores
 
 ---
 
-**🏨 Hotel Paseo Las Mercedes** - Transformando la gestión hotelera con tecnología moderna.
+**🏨 ¡Tu Hotel PMS estará funcionando en la nube en menos de 30 minutos!**
+
+

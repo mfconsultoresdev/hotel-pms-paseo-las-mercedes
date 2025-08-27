@@ -101,3 +101,5 @@ NEXT_PUBLIC_SENTRY_DSN=[YOUR-SENTRY-DSN]
 # NEXTAUTH_SECRET y JWT_SECRET ya están generados arriba
 # Puedes usar esos o generar nuevos con:
 # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+

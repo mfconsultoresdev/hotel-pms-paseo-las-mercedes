@@ -74,3 +74,4 @@ Write-Host "Configuracion completada!" -ForegroundColor Green
 Write-Host "Credenciales: admin@hotel.com / admin123" -ForegroundColor Cyan
 Write-Host "Instala Node.js y ejecuta: npm install && npm run dev" -ForegroundColor Yellow
 
+

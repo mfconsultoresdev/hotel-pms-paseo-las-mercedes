@@ -176,3 +176,4 @@ Write-Host "2. Abre: http://localhost:3000" -ForegroundColor Cyan
 Write-Host "3. Usuario: admin@hotel.com" -ForegroundColor Cyan
 Write-Host "4. Contrasena: admin123" -ForegroundColor Cyan
 
+

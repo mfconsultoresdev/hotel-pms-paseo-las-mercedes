@@ -50,3 +50,5 @@ Write-Host "   2. Conecta tu repositorio a la plataforma de deploy" -ForegroundC
 Write-Host "   3. Configura la base de datos PostgreSQL" -ForegroundColor Cyan
 Write-Host "   4. Ejecuta el deploy automático" -ForegroundColor Cyan
 
+
+

@@ -209,3 +209,5 @@ Si encuentras problemas:
 4. Revisa la documentación de Vercel y Supabase
 
 **🚀 ¡Tu Hotel PMS estará funcionando en la nube en menos de 30 minutos!**
+
+

@@ -80,3 +80,5 @@ PRISMA_GENERATE_DATAPROXY=true
 # DATABASE_URL=postgresql://postgres:mipassword123@db.abc123def456.supabase.co:5432/postgres
 # NEXTAUTH_URL=https://mi-hotel-pms.vercel.app
 # NEXT_PUBLIC_APP_URL=https://mi-hotel-pms.vercel.app
+
+

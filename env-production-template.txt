@@ -56,3 +56,5 @@ NEXT_PUBLIC_API_URL=https://[YOUR-APP].vercel.app/api
 # 4. Genera secrets únicos para NEXTAUTH_SECRET y JWT_SECRET
 # 5. Para generar secrets: openssl rand -base64 32
 
+
+

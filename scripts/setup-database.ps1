@@ -242,3 +242,4 @@ Write-Host "   Contraseña: admin123" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "🎯 Configuración completada exitosamente" -ForegroundColor Green
 
+

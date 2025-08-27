@@ -247,3 +247,4 @@ Si encuentras problemas durante la configuración:
 
 **🚀 ¡El sistema está listo para funcionar una vez configurada la base de datos!**
 
+
