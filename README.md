@@ -1,6 +1,9 @@
-# 🏨 Hotel PMS - Paseo Las Mercedes
+# Hotel PMS - Sistema de Gestión Hotelera
 
-Sistema de Gestión Hotelera (PMS) completo y moderno para el Hotel Paseo Las Mercedes.
+<!-- Última actualización: 2025-01-16 - Deploy Vercel + Supabase -->
+
+## 🏨 Descripción
+Sistema completo de gestión hotelera (PMS) desarrollado con Next.js 14, TypeScript y Prisma.
 
 ## 🚀 Características
 
@@ -127,51 +130,4 @@ npm run dev
 
 ### Scripts de Automatización
 - `.\scripts\create-github-repo.ps1` - Crear repositorio en GitHub
-- `.\scripts\push-to-github.ps1` - Subir código a GitHub
-- `.\scripts\deploy-vercel.ps1` - Deploy automático en Vercel
-
-## 📊 Estado del Proyecto
-
-- ✅ **FASE 1**: Estructura base y autenticación
-- ✅ **FASE 2**: Gestión de huéspedes y habitaciones
-- ✅ **FASE 3**: Sistema de reservas
-- ✅ **FASE 4**: Facturación y pagos
-- ✅ **FASE 5**: Housekeeping
-- ✅ **FASE 6**: Reportes y analytics
-- ✅ **FASE 7**: Integraciones de terceros
-- ✅ **FASE 8**: Seguridad y compliance
-- ✅ **FASE 9**: Mobile optimization
-- ✅ **FASE 10**: Testing y QA
-- ✅ **FASE 11**: Monitoreo y observabilidad
-- 🚧 **FASE 12**: Deploy y producción
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
-## 📞 Contacto
-
-- **Desarrollador**: [Tu Nombre]
-- **Email**: [tu-email@ejemplo.com]
-- **Proyecto**: [https://github.com/[TU-USUARIO]/hotel-pms-paseo-las-mercedes](https://github.com/[TU-USUARIO]/hotel-pms-paseo-las-mercedes)
-
-## 🙏 Agradecimientos
-
-- Next.js por el framework increíble
-- Vercel por el hosting gratuito
-- Supabase por la base de datos gratuita
-- La comunidad de desarrolladores
-
----
-
-**🏨 ¡Tu Hotel PMS estará funcionando en la nube en menos de 30 minutos!**
-
-
+- `
