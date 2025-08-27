@@ -176,10 +176,15 @@ export const XAxis: React.FC<XAxisProps> = ({ dataKey }) => {
 }
 
 // YAxis wrapper
-export const YAxis: React.FC = () => {
+interface YAxisProps {
+  yAxisId?: string
+  orientation?: "left" | "right"
+}
+
+export const YAxis: React.FC<YAxisProps> = ({ yAxisId, orientation }) => {
   // @ts-ignore - Ignorar conflicto de tipos entre React y Recharts
   return (
-    <RechartsYAxis />
+    <RechartsYAxis yAxisId={yAxisId} orientation={orientation} />
   )
 }
 
