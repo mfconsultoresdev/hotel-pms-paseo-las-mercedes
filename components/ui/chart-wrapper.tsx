@@ -1,0 +1,22 @@
+'use client'
+
+import React from 'react'
+import { ResponsiveContainer as RechartsResponsiveContainer } from 'recharts'
+
+interface ResponsiveContainerProps {
+  width?: string | number
+  height?: string | number
+  children: React.ReactNode
+}
+
+export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({ 
+  width = "100%", 
+  height = 400, 
+  children 
+}) => {
+  return (
+    <RechartsResponsiveContainer width={width} height={height}>
+      {children}
+    </RechartsResponsiveContainer>
+  )
+}
