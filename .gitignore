@@ -1,26 +1,8 @@
-# Dependencies
 **/node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Next.js
-.next/
-out/
+.next
 .cache
 .build
-dist/
-*.tsbuildinfo
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Yarn
+*.nfs*
 **/.yarn/
 !**/.yarn/patches
 !**/.yarn/plugins
@@ -30,29 +12,12 @@ dist/
 !**/.yarn/cache
 **/.yarn/build-state.yml
 **/.yarn/install-state.gz
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-*.nfs*
-Thumbs.db
-
-# Build artifacts
-target/
-build/
-
-# Deployment and logs
-.deploy/
-.logs/
-*.log
-
-# Database
-/prisma/migrations/*/migration.sql
-
-# Abacus specific
-.abacus.donotdelete
+dist
+target
+out
+.deploy
+.logs
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
