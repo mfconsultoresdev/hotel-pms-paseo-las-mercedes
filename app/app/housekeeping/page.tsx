@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   User,
   Calendar,
-  BarChart3
+  BarChart3,
+  Plus
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
@@ -362,55 +363,283 @@ export default function HousekeepingPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="tasks">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestión de Tareas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>La gestión detallada de tareas estará disponible próximamente</p>
-                <Link href="/housekeeping/tasks" className="mt-4 inline-block">
-                  <Button>Ver Todas las Tareas</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="tasks" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  Resumen de Tareas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {dashboardData?.task_stats.pending || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Pendientes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {dashboardData?.task_stats.in_progress || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">En Progreso</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progreso del día</span>
+                      <span>{dashboardData?.task_stats.completion_rate || 0}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-600 h-2 rounded-full"
+                        style={{ width: `${dashboardData?.task_stats.completion_rate || 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/tasks">
+                      <Button className="w-full">
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Gestionar Tareas
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Tareas por Prioridad</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {dashboardData?.task_stats.high_priority && dashboardData.task_stats.high_priority > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium">Urgentes</span>
+                      </div>
+                      <Badge variant="destructive">{dashboardData.task_stats.high_priority}</Badge>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-2 text-center text-sm">
+                    <div className="p-2 bg-muted rounded">
+                      <div className="font-medium">{dashboardData?.task_stats.total || 0}</div>
+                      <div className="text-muted-foreground">Total Hoy</div>
+                    </div>
+                    <div className="p-2 bg-green-50 rounded">
+                      <div className="font-medium text-green-700">{dashboardData?.task_stats.completed || 0}</div>
+                      <div className="text-muted-foreground">Completadas</div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/tasks/new">
+                      <Button variant="outline" className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nueva Tarea
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="staff">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestión de Personal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>La gestión de personal estará disponible próximamente</p>
-                <Link href="/housekeeping/staff" className="mt-4 inline-block">
-                  <Button>Ver Personal</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="staff" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Personal Disponible
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {dashboardData?.staff_stats.present_today || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Presentes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {dashboardData?.staff_stats.on_duty || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">En Servicio</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Disponibilidad</span>
+                      <span>{dashboardData?.staff_stats.availability_rate || 0}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${dashboardData?.staff_stats.availability_rate || 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/staff">
+                      <Button className="w-full">
+                        <User className="h-4 w-4 mr-2" />
+                        Gestionar Personal
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Estado del Equipo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm font-medium">Disponibles</span>
+                    </div>
+                    <span className="font-medium">{dashboardData?.staff_stats.present_today || 0}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-center text-sm">
+                    <div className="p-2 bg-muted rounded">
+                      <div className="font-medium">0</div>
+                      <div className="text-muted-foreground">En Descanso</div>
+                    </div>
+                    <div className="p-2 bg-orange-50 rounded">
+                      <div className="font-medium text-orange-700">0</div>
+                      <div className="text-muted-foreground">Ausentes</div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/staff/new">
+                      <Button variant="outline" className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nuevo Empleado
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="supplies">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestión de Suministros</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>La gestión de suministros estará disponible próximamente</p>
-                <Link href="/housekeeping/supplies" className="mt-4 inline-block">
-                  <Button>Ver Suministros</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="supplies" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Inventario
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">
+                        {dashboardData?.supply_stats.low_stock_count || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Stock Bajo</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        0
+                      </div>
+                      <div className="text-sm text-muted-foreground">Stock Normal</div>
+                    </div>
+                  </div>
+                  
+                  {dashboardData?.supply_stats.low_stock_count && dashboardData.supply_stats.low_stock_count > 0 && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium text-red-800">Acción Requerida</span>
+                      </div>
+                      <p className="text-xs text-red-700">
+                        {dashboardData.supply_stats.low_stock_count} suministros necesitan reposición
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/supplies">
+                      <Button className="w-full">
+                        <Package className="h-4 w-4 mr-2" />
+                        Gestionar Inventario
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Alertas de Stock</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {dashboardData?.supply_stats.low_stock_count && dashboardData.supply_stats.low_stock_count > 0 ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-orange-500" />
+                          <span className="text-sm font-medium">Productos de Limpieza</span>
+                        </div>
+                        <Badge variant="secondary">Revisar</Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-yellow-500" />
+                          <span className="text-sm font-medium">Amenidades</span>
+                        </div>
+                        <Badge variant="outline">Monitor</Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      <p className="text-sm text-muted-foreground">
+                        Todos los suministros en stock normal
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t">
+                    <Link href="/housekeeping/supplies/new">
+                      <Button variant="outline" className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nuevo Suministro
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
