@@ -103,6 +103,12 @@ model Hotel {
   communication_recipients    CommunicationRecipient[]
   guest_communication_recipients GuestCommunicationRecipient[]
   notifications               Notification[]
+  
+  // Advanced Payment Relations
+  collection_actions CollectionAction[]
+  payment_plans     PaymentPlan[]
+  fiscal_documents  FiscalDocument[]
+  exchange_rates    ExchangeRate[]
 
   @@map("hotels")
 }
@@ -293,6 +299,9 @@ model Guest {
   vip_status  Boolean  @default(false)
   preferences Json?    // JSON object for preferences
   notes       String?
+  
+  // Payment integration
+  stripe_customer_id String? // Stripe customer ID for saved payment methods
   
   // Audit fields
   created_at  DateTime @default(now())
@@ -644,6 +653,8 @@ model Invoice {
   reservation       Reservation? @relation(fields: [reservation_id], references: [id])
   invoice_items     InvoiceItem[]
   payments          Payment[]
+  collection_actions CollectionAction[]
+  payment_plan      PaymentPlan?
   
   @@map("invoices")
 }
@@ -749,6 +760,7 @@ model Payment {
   invoice           Invoice?    @relation(fields: [invoice_id], references: [id])
   reservation       Reservation? @relation(fields: [reservation_id], references: [id])
   guest             Guest?      @relation(fields: [guest_id], references: [id])
+  installment_payments PaymentPlanInstallment[]
   
   @@map("payments")
 }
@@ -1709,3 +1721,154 @@ model Notification {
   
   @@map("notifications")
 }
+
+// COLLECTION ACTIONS - Sistema de cuentas por cobrar
+model CollectionAction {
+  id                   String   @id @default(cuid())
+  hotel_id             String
+  invoice_id           String
+  
+  // Action details
+  action_type          String   // PAYMENT_PLAN, REMINDER, COLLECTION_CALL, LEGAL_ACTION
+  action_date          DateTime @default(now())
+  notes                String?
+  
+  // Reminder configuration
+  reminder_type        String?  // EMAIL, SMS, PHONE
+  next_follow_up_date  DateTime?
+  
+  // Financial information
+  outstanding_amount   Decimal  @db.Decimal(12,2)
+  
+  // Status and tracking
+  status               String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  completed_at         DateTime?
+  completed_by         String?
+  
+  // Audit fields
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  created_by           String?
+  
+  // Relations
+  hotel                Hotel    @relation(fields: [hotel_id], references: [id])
+  invoice              Invoice  @relation(fields: [invoice_id], references: [id])
+  
+  @@map("collection_actions")
+}
+
+// PAYMENT PLANS - Planes de pago a cuotas
+model PaymentPlan {
+  id            String   @id @default(cuid())
+  hotel_id      String
+  invoice_id    String   @unique
+  
+  // Plan details
+  total_amount  Decimal  @db.Decimal(12,2)
+  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED, DEFAULTED
+  
+  // Audit fields
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  created_by    String?
+  
+  // Relations
+  hotel         Hotel         @relation(fields: [hotel_id], references: [id])
+  invoice       Invoice       @relation(fields: [invoice_id], references: [id])
+  installments  PaymentPlanInstallment[]
+  
+  @@map("payment_plans")
+}
+
+// PAYMENT PLAN INSTALLMENTS - Cuotas de planes de pago
+model PaymentPlanInstallment {
+  id                  String      @id @default(cuid())
+  payment_plan_id     String
+  
+  // Installment details
+  installment_number  Int
+  due_date            DateTime
+  amount              Decimal     @db.Decimal(12,2)
+  status              String      @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED
+  
+  // Payment tracking
+  paid_amount         Decimal?    @db.Decimal(12,2)
+  paid_date           DateTime?
+  payment_id          String?
+  
+  // Audit fields
+  created_at          DateTime    @default(now())
+  updated_at          DateTime    @updatedAt
+  
+  // Relations
+  payment_plan        PaymentPlan @relation(fields: [payment_plan_id], references: [id], onDelete: Cascade)
+  payment             Payment?    @relation(fields: [payment_id], references: [id])
+  
+  @@map("payment_plan_installments")
+}
+
+// FISCAL DOCUMENTS - Documentos fiscales adicionales
+model FiscalDocument {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  
+  // Document identification
+  document_type     String   // CREDIT_NOTE, DEBIT_NOTE, RECEIPT
+  document_number   String   @unique
+  reference_invoice String?  // Invoice number being referenced
+  
+  // Content
+  issue_date        DateTime @default(now())
+  description       String
+  amount            Decimal  @db.Decimal(12,2)
+  currency          String   @default("USD")
+  
+  // Tax information
+  iva_amount        Decimal  @db.Decimal(12,2) @default(0)
+  municipal_tax     Decimal  @db.Decimal(12,2) @default(0)
+  
+  // Legal compliance
+  legal_reference   String?  // Law or regulation reference
+  authorized_by     String?
+  
+  // Audit fields
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  
+  // Relations
+  hotel             Hotel    @relation(fields: [hotel_id], references: [id])
+  
+  @@map("fiscal_documents")
+}
+
+// EXCHANGE RATES - Tasas de cambio
+model ExchangeRate {
+  id            String   @id @default(cuid())
+  hotel_id      String
+  
+  // Currency pair
+  from_currency String   // USD, EUR, etc.
+  to_currency   String   // VES, USD, etc.
+  rate          Decimal  @db.Decimal(12,6)
+  
+  // Validity
+  effective_date DateTime @default(now())
+  source        String?  // BCV, Manual, API, etc.
+  
+  // Status
+  is_active     Boolean  @default(true)
+  
+  // Audit fields
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  created_by    String?
+  
+  // Relations
+  hotel         Hotel    @relation(fields: [hotel_id], references: [id])
+  
+  @@unique([hotel_id, from_currency, to_currency, effective_date])
+  @@map("exchange_rates")
+}
+
+

@@ -17,7 +17,11 @@ import {
   Menu,
   LogOut,
   Hotel,
-  BarChart3
+  BarChart3,
+  ShoppingCart,
+  FileText,
+  AlertTriangle,
+  Calculator
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
@@ -58,6 +62,24 @@ const sidebarNavItems: SidebarNavItem[] = [
     href: '/billing',
     icon: CreditCard,
     description: 'Facturación y pagos'
+  },
+  {
+    title: 'POS/Ventas',
+    href: '/pos',
+    icon: ShoppingCart,
+    description: 'Punto de venta integrado'
+  },
+  {
+    title: 'Cuentas x Cobrar',
+    href: '/accounts-receivable',
+    icon: AlertTriangle,
+    description: 'Gestión de cobranza'
+  },
+  {
+    title: 'Reportes Fiscales',
+    href: '/fiscal/reports',
+    icon: Calculator,
+    description: 'Reportes para SENIAT'
   },
   {
     title: 'Reportes',
