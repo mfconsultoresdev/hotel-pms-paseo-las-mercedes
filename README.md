@@ -39,15 +39,26 @@
 
 ## 📦 Instalación
 
-### Prerrequisitos
+### 🚀 **OPCIÓN 1: Paquete Comprimido (RECOMENDADO)**
+
+**⬇️ Descarga Directa:**
+1. Descargar: `hotel-pms-paseo-las-mercedes-completo.zip` (540KB)
+2. Descomprimir el archivo
+3. **Windows**: Doble clic en `SETUP_AUTOMATICO.bat`
+4. **Manual**: Seguir `GUIA_INSTALACION_CURSOR_SIMPLE.md`
+5. ¡Listo en 5 minutos! 🎉
+
+### 🔧 **OPCIÓN 2: Clonación Tradicional**
+
+#### Prerrequisitos
 - Node.js 18+
 - PostgreSQL
 - Yarn (recomendado)
 
-### 1. Clonar el repositorio
+#### 1. Clonar el repositorio
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd hotel_pms_paseo_las_mercedes
+git clone https://github.com/mfconsultoresdev/hotel-pms-paseo-las-mercedes-chatllm.git
+cd hotel-pms-paseo-las-mercedes-chatllm
 ```
 
 ### 2. Instalar dependencias
