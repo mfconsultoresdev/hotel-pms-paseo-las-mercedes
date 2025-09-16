@@ -1,12 +1,6 @@
-
 'use client'
 
 import { useEffect, useState } from 'react'
-// Dashboard layout is handled by the parent layout.tsx
-import { MetricsCards } from '@/components/dashboard/metrics-cards'
-import { RecentActivity } from '@/components/dashboard/recent-activity'
-import { QuickActions } from '@/components/dashboard/quick-actions'
-import { RoomsOverview } from '@/components/dashboard/rooms-overview'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -18,27 +12,16 @@ interface DashboardData {
   totalRooms: number
   occupiedRooms: number
   availableRooms: number
+  totalGuests: number
+  checkInsToday: number
+  checkOutsToday: number
+  revenue: number
   occupancyRate: number
-  todayArrivals: number
-  todayDepartures: number
-  pendingCheckIns: number
-  todayRevenue: number
-  recentTransactions: Array<{
-    id: string
-    type: string
-    description: string
-    amount: number
-    currency: string
-    created_at: string
-    guest_name: string | null
-    room_number: string | null
-    service_name: string | null
-  }>
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const [data, setData] = useState<DashboardData | null>(null)
+  const { data: session } = useSession()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -48,43 +31,39 @@ export default function DashboardPage() {
       setError(null)
       
       const response = await fetch('/api/dashboard')
-      
       if (!response.ok) {
-        throw new Error('Error al cargar los datos del dashboard')
+        throw new Error('Failed to fetch dashboard data')
       }
       
-      const dashboardData = await response.json()
-      setData(dashboardData)
+      const data = await response.json()
+      setDashboardData(data)
     } catch (err) {
-      console.error('Dashboard fetch error:', err)
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchDashboardData()
-      
-      // Auto-refresh every 5 minutes
-      const interval = setInterval(fetchDashboardData, 5 * 60 * 1000)
-      return () => clearInterval(interval)
-    }
-  }, [status])
+    fetchDashboardData()
+  }, [])
 
-  if (status === 'loading') {
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Skeleton className="h-10 w-24" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
             <Card key={i}>
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <Skeleton className="h-4 w-20" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-8 w-16" />
               </CardContent>
             </Card>
           ))}
@@ -93,94 +72,138 @@ export default function DashboardPage() {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            ¡Bienvenido, {session?.user?.firstName || 'Usuario'}!
-          </h1>
-          <p className="text-gray-600">
-            {session?.user?.hotelName} - {session?.user?.role}
-          </p>
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleDateString('es-VE', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Button onClick={fetchDashboardData} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
         </div>
         
-        <Button
-          onClick={fetchDashboardData}
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          className="mt-4 md:mt-0"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
-      </div>
-
-      {/* Error State */}
-      {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchDashboardData}
-              className="ml-2"
-            >
-              Reintentar
-            </Button>
           </AlertDescription>
         </Alert>
-      )}
+      </div>
+    )
+  }
 
-      {/* Loading State */}
-      {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-4 w-20" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
-              </CardContent>
-            </Card>
-          ))}
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back, {session?.user?.name || 'User'}
+          </p>
         </div>
-      )}
+        <Button onClick={fetchDashboardData} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
 
-      {/* Dashboard Content */}
-      {data && !loading && (
-        <>
-          {/* Metrics Cards */}
-          <MetricsCards metrics={data} />
-
-          {/* Quick Actions & Recent Activity */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-1">
-              <QuickActions />
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Rooms
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dashboardData?.totalRooms || 0}
             </div>
-            <div className="xl:col-span-2">
-              <RecentActivity transactions={data.recentTransactions} />
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Rooms Overview */}
-          <RoomsOverview />
-        </>
-      )}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Occupied Rooms
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {dashboardData?.occupiedRooms || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Available Rooms
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {dashboardData?.availableRooms || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Occupancy Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {dashboardData?.occupancyRate?.toFixed(1) || 0}%
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Check-ins Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dashboardData?.checkInsToday || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Check-outs Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dashboardData?.checkOutsToday || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              ${dashboardData?.revenue?.toLocaleString() || 0}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
