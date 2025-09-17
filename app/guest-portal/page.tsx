@@ -1,14 +1,7 @@
-
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Loader2, Key, MessageSquare, Wifi, Phone, MapPin, Clock } from 'lucide-react'
-import { toast } from "react-hot-toast"
 
 interface GuestSession {
   guest: {
@@ -48,98 +41,164 @@ export default function GuestPortalPage() {
 
   const handleLogin = async () => {
     if (!reservationCode.trim()) {
-      toast.error('Por favor ingrese el código de reserva')
+      alert('Por favor ingrese el código de reservación')
       return
     }
 
     setLoading(true)
     try {
-      const response = await fetch('/api/guest-portal/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      const dummySession: GuestSession = {
+        guest: {
+          id: '1',
+          first_name: 'Juan',
+          last_name: 'Pérez',
+          email: 'juan@example.com'
+        },
+        reservation: {
+          id: '1',
           reservation_number: reservationCode,
-          guest_email: guestEmail
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setGuestSession(data)
-        toast.success('¡Bienvenido!')
-      } else {
-        const error = await response.json()
-        toast.error(error.message || 'Código de reserva no válido')
+          check_in_date: '2024-07-25',
+          check_out_date: '2024-07-28',
+          room: {
+            room_number: '101',
+            room_type: {
+              name: 'Habitación Doble',
+              amenities: {
+                wifi: true,
+                tv: true,
+                minibar: true,
+                balcony: true,
+                ocean_view: false
+              }
+            }
+          }
+        },
+        hotel: {
+          name: 'Hotel Paseo Las Mercedes',
+          address: 'Calle Principal #123, Cartagena, Colombia',
+          phone: '+57 5 123-4567',
+          email: 'info@hotelpaseolasmercedes.com'
+        },
+        messages: [
+          {
+            id: '1',
+            type: 'welcome',
+            title: 'Bienvenido',
+            content: '¡Bienvenido a Hotel Paseo Las Mercedes! Esperamos que disfrute su estancia.',
+            timestamp: '2024-07-25T10:00:00Z',
+            read: false
+          },
+          {
+            id: '2',
+            type: 'service',
+            title: 'Servicio a la Habitación',
+            content: 'Nuestro servicio a la habitación está disponible 24/7. Marque el 9 para solicitar.',
+            timestamp: '2024-07-25T11:00:00Z',
+            read: true
+          }
+        ]
       }
+      
+      setGuestSession(dummySession)
     } catch (error) {
-      console.error('Error logging in:', error)
-      toast.error('Error al acceder al portal')
+      alert('Error al acceder al portal. Verifique el código de reservación.')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleLogout = () => {
+    setGuestSession(null)
+    setReservationCode('')
+    setGuestEmail('')
+    setActiveTab('info')
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
-      weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
   }
 
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
   if (!guestSession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-              <Key className="h-8 w-8 text-blue-600" />
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Key className="h-8 w-8 text-blue-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Portal del Huésped</h1>
+              <p className="text-gray-600">Acceda a su información de reservación</p>
             </div>
-            <CardTitle className="text-2xl">Portal de Huéspedes</CardTitle>
-            <p className="text-gray-600">Hotel Paseo Las Mercedes</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="reservation-code">Código de Reserva</Label>
-              <Input
-                id="reservation-code"
-                placeholder="Ej: RES-2024-001"
-                value={reservationCode}
-                onChange={(e) => setReservationCode(e.target.value)}
-                className="mt-1"
-              />
+
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin() }} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Código de Reservación
+                </label>
+                <input
+                  type="text"
+                  value={reservationCode}
+                  onChange={(e) => setReservationCode(e.target.value)}
+                  placeholder="Ingrese su código de reservación"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email (opcional)
+                </label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="su@email.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Accediendo...
+                  </>
+                ) : (
+                  'Acceder al Portal'
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                ¿Necesita ayuda? Contacte a{' '}
+                <a href="mailto:info@hotelpaseolasmercedes.com" className="text-blue-600 hover:text-blue-800">
+                  recepción
+                </a>
+              </p>
             </div>
-            <div>
-              <Label htmlFor="guest-email">Email (opcional)</Label>
-              <Input
-                id="guest-email"
-                type="email"
-                placeholder="su-email@ejemplo.com"
-                value={guestEmail}
-                onChange={(e) => setGuestEmail(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <Button 
-              onClick={handleLogin} 
-              className="w-full" 
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                'Acceder al Portal'
-              )}
-            </Button>
-            <p className="text-xs text-gray-500 text-center">
-              Su código de reserva se encuentra en su confirmación de reserva o en el check-in
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     )
   }
@@ -148,253 +207,219 @@ export default function GuestPortalPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Bienvenido, {guestSession.guest.first_name} {guestSession.guest.last_name}
+              <h1 className="text-xl font-semibold text-gray-900">
+                Bienvenido, {guestSession.guest.first_name}
               </h1>
-              <p className="text-gray-600">
-                Habitación {guestSession.reservation.room.room_number} • {guestSession.reservation.reservation_number}
+              <p className="text-sm text-gray-600">
+                Reservación #{guestSession.reservation.reservation_number}
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setGuestSession(null)}
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-gray-700 text-sm"
             >
               Cerrar Sesión
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-8 bg-white p-1 rounded-lg shadow-sm">
-          {[
-            { id: 'info', label: 'Mi Estancia', icon: Clock },
-            { id: 'messages', label: 'Mensajes', icon: MessageSquare },
-            { id: 'services', label: 'Servicios', icon: Phone },
-            { id: 'hotel', label: 'Hotel Info', icon: MapPin }
-          ].map((tab) => (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tabs */}
+        <div className="mb-8">
+          <nav className="flex space-x-8">
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              onClick={() => setActiveTab('info')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'info'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <tab.icon className="mr-2 h-4 w-4" />
-              {tab.label}
+              Información
             </button>
-          ))}
+            <button
+              onClick={() => setActiveTab('amenities')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'amenities'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Servicios
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'messages'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Mensajes
+            </button>
+            <button
+              onClick={() => setActiveTab('contact')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'contact'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Contacto
+            </button>
+          </nav>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'info' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Detalles de su Estancia
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Reservación Info */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <Clock className="h-5 w-5 mr-2" />
+                Información de Reservación
+              </h2>
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium">Check-in</Label>
+                  <span className="text-sm font-medium text-gray-500">Número de Reservación:</span>
+                  <p className="text-lg font-semibold">{guestSession.reservation.reservation_number}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">Fecha de Llegada:</span>
                   <p className="text-lg">{formatDate(guestSession.reservation.check_in_date)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Check-out</Label>
+                  <span className="text-sm font-medium text-gray-500">Fecha de Salida:</span>
                   <p className="text-lg">{formatDate(guestSession.reservation.check_out_date)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Habitación</Label>
-                  <p className="text-lg">
+                  <span className="text-sm font-medium text-gray-500">Habitación:</span>
+                  <p className="text-lg font-semibold text-blue-600">
                     {guestSession.reservation.room.room_number} - {guestSession.reservation.room.room_type.name}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wifi className="h-5 w-5" />
-                  Información de la Habitación
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium">WiFi</Label>
-                    <p className="text-gray-600">Red: HotelPaseoLM</p>
-                    <p className="text-gray-600">Contraseña: disponible en recepción</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Servicios</Label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      <Badge variant="secondary">WiFi gratuito</Badge>
-                      <Badge variant="secondary">Aire acondicionado</Badge>
-                      <Badge variant="secondary">TV por cable</Badge>
-                      <Badge variant="secondary">Servicio 24/7</Badge>
-                    </div>
-                  </div>
+            {/* Huésped Info */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Información del Huésped</h2>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-sm font-medium text-gray-500">Nombre:</span>
+                  <p className="text-lg">{guestSession.guest.first_name} {guestSession.guest.last_name}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">Email:</span>
+                  <p className="text-lg">{guestSession.guest.email || 'No proporcionado'}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">Estado:</span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Activo
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Servicios Rápidos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button variant="outline" className="h-20 flex flex-col">
-                    <Phone className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Recepción</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col">
-                    <MessageSquare className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Chat</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col">
-                    <Wifi className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Soporte</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col">
-                    <Clock className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Servicios</span>
-                  </Button>
+        {activeTab === 'amenities' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-6">Servicios y Amenidades</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="flex items-center space-x-3">
+                <Wifi className="h-6 w-6 text-green-500" />
+                <div>
+                  <h3 className="font-medium">WiFi Gratuito</h3>
+                  <p className="text-sm text-gray-500">Internet de alta velocidad</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Phone className="h-6 w-6 text-blue-500" />
+                <div>
+                  <h3 className="font-medium">Servicio a la Habitación</h3>
+                  <p className="text-sm text-gray-500">Disponible 24/7</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <MapPin className="h-6 w-6 text-red-500" />
+                <div>
+                  <h3 className="font-medium">Ubicación Céntrica</h3>
+                  <p className="text-sm text-gray-500">Cerca de atracciones</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Mensajes del Hotel
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay mensajes</h3>
-                <p className="text-gray-500">Los mensajes del hotel aparecerán aquí</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === 'services' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Servicio a la Habitación</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Disponible 24 horas para su comodidad
-                </p>
-                <Button className="w-full">Solicitar Servicio</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Housekeeping</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Solicitar limpieza o artículos adicionales
-                </p>
-                <Button className="w-full" variant="outline">
-                  Solicitar Limpieza
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Concierge</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Información turística y reservas
-                </p>
-                <Button className="w-full" variant="outline">
-                  Contactar Concierge
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-6 flex items-center">
+              <MessageSquare className="h-5 w-5 mr-2" />
+              Mensajes
+            </h2>
+            <div className="space-y-4">
+              {guestSession.messages?.map((message) => (
+                <div key={message.id} className={`border rounded-lg p-4 ${!message.read ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{message.title}</h3>
+                      <p className="text-gray-600 mt-1">{message.content}</p>
+                      <p className="text-xs text-gray-400 mt-2">{formatTime(message.timestamp)}</p>
+                    </div>
+                    {!message.read && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Nuevo
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {activeTab === 'hotel' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Información del Hotel
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Nombre</Label>
-                  <p className="text-lg">{guestSession.hotel.name}</p>
+        {activeTab === 'contact' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-6">Información de Contacto</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium mb-3">Hotel Paseo Las Mercedes</h3>
+                <div className="space-y-2">
+                  <p className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                    {guestSession.hotel.address}
+                  </p>
+                  <p className="flex items-center">
+                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                    {guestSession.hotel.phone}
+                  </p>
+                  <p className="flex items-center">
+                    <MessageSquare className="h-4 w-4 mr-2 text-gray-400" />
+                    {guestSession.hotel.email}
+                  </p>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Dirección</Label>
-                  <p className="text-gray-600">{guestSession.hotel.address}</p>
+              </div>
+              <div>
+                <h3 className="font-medium mb-3">Servicios de Emergencia</h3>
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    <strong>Recepción:</strong> Marque 0 desde su habitación
+                  </p>
+                  <p className="text-sm">
+                    <strong>Emergencias:</strong> Marque 911
+                  </p>
+                  <p className="text-sm">
+                    <strong>Servicio a la Habitación:</strong> Marque 9
+                  </p>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Teléfono</Label>
-                  <p className="text-gray-600">{guestSession.hotel.phone}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-gray-600">{guestSession.hotel.email}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Servicios del Hotel</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Recepción 24 horas</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>WiFi gratuito</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Servicio a la habitación</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Concierge</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Servicio de limpieza</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
       </div>
