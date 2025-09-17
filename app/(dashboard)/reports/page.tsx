@@ -1,12 +1,6 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DatePicker } from "@/components/ui/date-picker"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { TrendingUp, DollarSign, Users, Bed, Calendar, FileText, Download } from 'lucide-react'
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns'
@@ -191,270 +185,258 @@ export default function ReportsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Reportes y Analytics</h1>
-          <p className="text-muted-foreground">Análisis detallado del rendimiento del hotel</p>
+          <p className="text-gray-500">Análisis detallado del rendimiento del hotel</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => exportReport('pdf')}>
+          <button 
+            onClick={() => exportReport('pdf')}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center"
+          >
             <Download className="h-4 w-4 mr-2" />
             PDF
-          </Button>
-          <Button variant="outline" onClick={() => exportReport('excel')}>
+          </button>
+          <button 
+            onClick={() => exportReport('excel')}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center"
+          >
             <Download className="h-4 w-4 mr-2" />
             Excel
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Date Range Selector */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="last_7_days">Últimos 7 días</SelectItem>
-                <SelectItem value="last_30_days">Últimos 30 días</SelectItem>
-                <SelectItem value="last_3_months">Últimos 3 meses</SelectItem>
-                <SelectItem value="this_month">Este mes</SelectItem>
-                <SelectItem value="last_month">Mes pasado</SelectItem>
-                <SelectItem value="custom">Personalizado</SelectItem>
-              </SelectContent>
-            </Select>
-            {dateRange === 'custom' && (
-              <>
-                <DatePicker
-                  date={startDate}
-                  setDate={(date) => date && setStartDate(date)}
-                  placeholder="Fecha inicio"
-                />
-                <DatePicker
-                  date={endDate}
-                  setDate={(date) => date && setEndDate(date)}
-                  placeholder="Fecha fin"
-                />
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white border rounded-lg p-6">
+        <div className="flex flex-wrap gap-4 items-center">
+          <select 
+            value={dateRange} 
+            onChange={(e) => setDateRange(e.target.value)}
+            className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="last_7_days">Últimos 7 días</option>
+            <option value="last_30_days">Últimos 30 días</option>
+            <option value="last_3_months">Últimos 3 meses</option>
+            <option value="this_month">Este mes</option>
+            <option value="last_month">Mes pasado</option>
+            <option value="custom">Personalizado</option>
+          </select>
+          {dateRange === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={format(startDate, 'yyyy-MM-dd')}
+                onChange={(e) => setStartDate(new Date(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="date"
+                value={format(endDate, 'yyyy-MM-dd')}
+                onChange={(e) => setEndDate(new Date(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Ingresos Totales</h3>
+            <DollarSign className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-green-600">+12.5% vs mes anterior</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ocupación</CardTitle>
-            <Bed className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Ocupación</h3>
+            <Bed className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">{stats.occupancyRate}%</div>
             <p className="text-xs text-green-600">+3.2% vs mes anterior</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tarifa Promedio</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Tarifa Promedio</h3>
+            <TrendingUp className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">${stats.avgDailyRate}</div>
             <p className="text-xs text-red-600">-2.1% vs mes anterior</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reservas</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Reservas</h3>
+            <Calendar className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">{stats.totalReservations}</div>
             <p className="text-xs text-green-600">+8.7% vs mes anterior</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Huéspedes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Huéspedes</h3>
+            <Users className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">{stats.totalGuests}</div>
             <p className="text-xs text-green-600">+15.3% vs mes anterior</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Recurrentes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">Clientes Recurrentes</h3>
+            <Users className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-2">
             <div className="text-2xl font-bold">{stats.repeatGuests}</div>
-            <p className="text-xs text-muted-foreground">14.8% del total</p>
-          </CardContent>
-        </Card>
+            <p className="text-xs text-gray-500">14.8% del total</p>
+          </div>
+        </div>
       </div>
 
       {/* Charts and Analytics */}
-      <Tabs defaultValue="occupancy" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="occupancy">Ocupación</TabsTrigger>
-          <TabsTrigger value="revenue">Ingresos</TabsTrigger>
-          <TabsTrigger value="guests">Huéspedes</TabsTrigger>
-          <TabsTrigger value="trends">Tendencias</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        {/* Tabs Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button className="border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+              Ocupación
+            </button>
+            <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+              Ingresos
+            </button>
+            <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+              Huéspedes
+            </button>
+            <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+              Tendencias
+            </button>
+          </nav>
+        </div>
 
-        <TabsContent value="occupancy">
-          <Card>
-            <CardHeader>
-              <CardTitle>Análisis de Ocupación</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={reportData.occupancy}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="occupancy" stroke="#8884d8" name="Ocupación %" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Occupancy Chart */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Análisis de Ocupación</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={reportData.occupancy}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="occupancy" stroke="#8884d8" name="Ocupación %" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-        <TabsContent value="revenue">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ingresos Diarios</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={reportData.occupancy}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="revenue" fill="#82ca9d" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribución de Ingresos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={reportData.revenue}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({name, percentage}) => `${name}: ${percentage}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="amount"
-                    >
-                      {reportData.revenue.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+        {/* Revenue Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Ingresos Diarios</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.occupancy}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="revenue" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </TabsContent>
 
-        <TabsContent value="guests">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Segmentación de Huéspedes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={reportData.guestStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({segment, percentage}) => `${segment}: ${percentage}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {reportData.guestStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Ocupación por Tipo de Habitación</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={reportData.roomStats}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="type" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="occupied" fill="#8884d8" name="Ocupadas" />
-                    <Bar dataKey="total" fill="#82ca9d" name="Total" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Distribución de Ingresos</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={reportData.revenue}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({name, percentage}) => `${name}: ${percentage}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="amount"
+                >
+                  {reportData.revenue.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="trends">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tendencias Mensuales</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={reportData.trends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Bar yAxisId="left" dataKey="reservations" fill="#8884d8" name="Reservas" />
-                  <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" name="Ingresos" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        {/* Guest Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Segmentación de Huéspedes</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={reportData.guestStats}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({segment, percentage}) => `${segment}: ${percentage}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {reportData.guestStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Ocupación por Tipo de Habitación</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.roomStats}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="occupied" fill="#8884d8" name="Ocupadas" />
+                <Bar dataKey="total" fill="#82ca9d" name="Total" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Trends Chart */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Tendencias Mensuales</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={reportData.trends}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip />
+              <Bar yAxisId="left" dataKey="reservations" fill="#8884d8" name="Reservas" />
+              <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" name="Ingresos" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   )
 }
