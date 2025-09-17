@@ -1,38 +1,7 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Loader2, Plus, Edit, Trash2, MessageSquare, Users, Settings, Eye } from 'lucide-react'
-import { toast } from "react-hot-toast"
 
 interface MessageTemplate {
   id: string
@@ -49,49 +18,26 @@ interface MessageTemplate {
   send_delay_hours: number
   created_at: string
   updated_at: string
-  messages?: any[]
 }
-
-const CATEGORIES = [
-  { value: 'WELCOME', label: 'Bienvenida' },
-  { value: 'CHECKOUT', label: 'Check-out' },
-  { value: 'SERVICE', label: 'Servicios' },
-  { value: 'EMERGENCY', label: 'Emergencias' },
-  { value: 'POLICY', label: 'Políticas' },
-  { value: 'PROMOTION', label: 'Promociones' },
-  { value: 'GENERAL', label: 'General' },
-  { value: 'ANNOUNCEMENT', label: 'Anuncios' }
-]
-
-const TYPES = [
-  { value: 'GUEST', label: 'Huéspedes' },
-  { value: 'STAFF', label: 'Personal' },
-  { value: 'BOTH', label: 'Ambos' }
-]
-
-const TRIGGER_EVENTS = [
-  { value: 'CHECK_IN', label: 'Check-in' },
-  { value: 'CHECKOUT', label: 'Check-out' },
-  { value: 'SERVICE_REQUEST', label: 'Solicitud de servicio' },
-  { value: 'RESERVATION_CREATED', label: 'Reserva creada' },
-  { value: 'MAINTENANCE', label: 'Mantenimiento' }
-]
 
 export default function CommunicationTemplatesPage() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterType, setFilterType] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('ALL')
-  const [selectedType, setSelectedType] = useState('ALL')
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null)
+  const [processing, setProcessing] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
-    category: 'GENERAL',
-    type: 'GUEST',
+    category: '',
+    type: '',
     subject: '',
     content: '',
-    variables: {},
     language: 'es',
     is_active: true,
     is_automatic: false,
@@ -99,110 +45,205 @@ export default function CommunicationTemplatesPage() {
     send_delay_hours: 0
   })
 
+  const categories = [
+    { value: 'all', label: 'Todas las categorías' },
+    { value: 'welcome', label: 'Bienvenida' },
+    { value: 'reservation', label: 'Reservación' },
+    { value: 'checkin', label: 'Check-in' },
+    { value: 'checkout', label: 'Check-out' },
+    { value: 'promotional', label: 'Promocional' },
+    { value: 'reminder', label: 'Recordatorio' },
+    { value: 'support', label: 'Soporte' }
+  ]
+
+  const types = [
+    { value: 'all', label: 'Todos los tipos' },
+    { value: 'email', label: 'Email' },
+    { value: 'sms', label: 'SMS' },
+    { value: 'push', label: 'Push Notification' },
+    { value: 'whatsapp', label: 'WhatsApp' }
+  ]
+
+  const triggerEvents = [
+    { value: '', label: 'Sin evento automático' },
+    { value: 'reservation_created', label: 'Reservación creada' },
+    { value: 'checkin_completed', label: 'Check-in completado' },
+    { value: 'checkout_completed', label: 'Check-out completado' },
+    { value: 'payment_received', label: 'Pago recibido' },
+    { value: 'booking_reminder', label: 'Recordatorio de reservación' }
+  ]
+
   useEffect(() => {
     fetchTemplates()
-  }, [selectedCategory, selectedType])
+  }, [])
 
   const fetchTemplates = async () => {
     try {
       setLoading(true)
-      const params = new URLSearchParams()
-      if (selectedCategory !== 'ALL') params.set('category', selectedCategory)
-      if (selectedType !== 'ALL') params.set('type', selectedType)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      const response = await fetch(`/api/templates?${params.toString()}`)
-      const data = await response.json()
+      const dummyTemplates: MessageTemplate[] = [
+        {
+          id: '1',
+          name: 'Bienvenida - Email',
+          category: 'welcome',
+          type: 'email',
+          subject: '¡Bienvenido a Hotel Paseo Las Mercedes!',
+          content: 'Estimado/a {{guest_name}},\n\n¡Bienvenido/a a Hotel Paseo Las Mercedes!\n\nEsperamos que su estancia sea placentera. Si necesita algo, no dude en contactarnos.\n\nSaludos cordiales,\nEl equipo del hotel',
+          language: 'es',
+          is_active: true,
+          is_automatic: true,
+          trigger_event: 'checkin_completed',
+          send_delay_hours: 0,
+          created_at: '2024-07-01',
+          updated_at: '2024-07-01'
+        },
+        {
+          id: '2',
+          name: 'Confirmación de Reservación',
+          category: 'reservation',
+          type: 'email',
+          subject: 'Confirmación de su reservación #{{reservation_number}}',
+          content: 'Estimado/a {{guest_name}},\n\nSu reservación ha sido confirmada:\n\n- Fecha de llegada: {{checkin_date}}\n- Fecha de salida: {{checkout_date}}\n- Habitación: {{room_number}}\n- Total: ${{total_amount}}\n\n¡Esperamos verlo/a pronto!\n\nSaludos,\nHotel Paseo Las Mercedes',
+          language: 'es',
+          is_active: true,
+          is_automatic: true,
+          trigger_event: 'reservation_created',
+          send_delay_hours: 0,
+          created_at: '2024-07-01',
+          updated_at: '2024-07-01'
+        },
+        {
+          id: '3',
+          name: 'Recordatorio de Check-out',
+          category: 'reminder',
+          type: 'sms',
+          subject: 'Recordatorio de check-out',
+          content: 'Estimado/a {{guest_name}}, le recordamos que su check-out es mañana a las 11:00 AM. Habitación {{room_number}}.',
+          language: 'es',
+          is_active: true,
+          is_automatic: true,
+          trigger_event: 'booking_reminder',
+          send_delay_hours: 24,
+          created_at: '2024-07-01',
+          updated_at: '2024-07-01'
+        }
+      ]
       
-      if (response.ok) {
-        setTemplates(data.templates || [])
-      } else {
-        toast.error('Error al cargar plantillas')
-      }
+      setTemplates(dummyTemplates)
     } catch (error) {
-      console.error('Error fetching templates:', error)
-      toast.error('Error al cargar plantillas')
+      setError('Error al cargar las plantillas')
     } finally {
       setLoading(false)
     }
   }
 
+  const filteredTemplates = templates.filter(template => {
+    const matchesCategory = filterCategory === 'all' || template.category === filterCategory
+    const matchesType = filterType === 'all' || template.type === filterType
+    const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         template.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return matchesCategory && matchesType && matchesSearch
+  })
+
   const handleCreateTemplate = async () => {
     try {
-      const response = await fetch('/api/templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-
-      if (response.ok) {
-        toast.success('Plantilla creada exitosamente')
-        setShowCreateDialog(false)
-        resetForm()
-        fetchTemplates()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Error al crear plantilla')
+      setProcessing(true)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const newTemplate: MessageTemplate = {
+        id: Date.now().toString(),
+        ...formData,
+        created_at: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString().split('T')[0]
       }
+      
+      setTemplates([...templates, newTemplate])
+      setShowCreateModal(false)
+      resetForm()
+      
+      alert('Plantilla creada exitosamente!')
     } catch (error) {
-      console.error('Error creating template:', error)
-      toast.error('Error al crear plantilla')
+      setError('Error al crear la plantilla')
+    } finally {
+      setProcessing(false)
     }
   }
 
-  const handleUpdateTemplate = async () => {
+  const handleEditTemplate = async () => {
     if (!editingTemplate) return
-
+    
     try {
-      const response = await fetch(`/api/templates/${editingTemplate.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-
-      if (response.ok) {
-        toast.success('Plantilla actualizada exitosamente')
-        setEditingTemplate(null)
-        resetForm()
-        fetchTemplates()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Error al actualizar plantilla')
+      setProcessing(true)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const updatedTemplate = {
+        ...editingTemplate,
+        ...formData,
+        updated_at: new Date().toISOString().split('T')[0]
       }
+      
+      setTemplates(templates.map(t => t.id === editingTemplate.id ? updatedTemplate : t))
+      setShowEditModal(false)
+      setEditingTemplate(null)
+      resetForm()
+      
+      alert('Plantilla actualizada exitosamente!')
     } catch (error) {
-      console.error('Error updating template:', error)
-      toast.error('Error al actualizar plantilla')
+      setError('Error al actualizar la plantilla')
+    } finally {
+      setProcessing(false)
     }
   }
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('¿Está seguro de que desea eliminar esta plantilla?')) return
-
+    if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return
+    
     try {
-      const response = await fetch(`/api/templates/${id}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        toast.success('Plantilla eliminada exitosamente')
-        fetchTemplates()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Error al eliminar plantilla')
-      }
+      setProcessing(true)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setTemplates(templates.filter(t => t.id !== id))
+      alert('Plantilla eliminada exitosamente!')
     } catch (error) {
-      console.error('Error deleting template:', error)
-      toast.error('Error al eliminar plantilla')
+      setError('Error al eliminar la plantilla')
+    } finally {
+      setProcessing(false)
     }
+  }
+
+  const handleEditClick = (template: MessageTemplate) => {
+    setEditingTemplate(template)
+    setFormData({
+      name: template.name,
+      category: template.category,
+      type: template.type,
+      subject: template.subject,
+      content: template.content,
+      language: template.language,
+      is_active: template.is_active,
+      is_automatic: template.is_automatic,
+      trigger_event: template.trigger_event || '',
+      send_delay_hours: template.send_delay_hours
+    })
+    setShowEditModal(true)
   }
 
   const resetForm = () => {
     setFormData({
       name: '',
-      category: 'GENERAL',
-      type: 'GUEST',
+      category: '',
+      type: '',
       subject: '',
       content: '',
-      variables: {},
       language: 'es',
       is_active: true,
       is_automatic: false,
@@ -211,361 +252,366 @@ export default function CommunicationTemplatesPage() {
     })
   }
 
-  const openEditDialog = (template: MessageTemplate) => {
-    setEditingTemplate(template)
-    setFormData({
-      name: template.name,
-      category: template.category,
-      type: template.type,
-      subject: template.subject,
-      content: template.content,
-      variables: template.variables || {},
-      language: template.language,
-      is_active: template.is_active,
-      is_automatic: template.is_automatic,
-      trigger_event: template.trigger_event || '',
-      send_delay_hours: template.send_delay_hours
-    })
-  }
-
-  const filteredTemplates = templates.filter(template =>
-    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.subject.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   const getCategoryLabel = (category: string) => {
-    return CATEGORIES.find(c => c.value === category)?.label || category
+    return categories.find(c => c.value === category)?.label || category
   }
 
   const getTypeLabel = (type: string) => {
-    return TYPES.find(t => t.value === type)?.label || type
+    return types.find(t => t.value === type)?.label || type
   }
 
-  const getTriggerEventLabel = (event: string) => {
-    return TRIGGER_EVENTS.find(e => e.value === event)?.label || event
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'email': return 'bg-blue-100 text-blue-800'
+      case 'sms': return 'bg-green-100 text-green-800'
+      case 'whatsapp': return 'bg-green-100 text-green-800'
+      case 'push': return 'bg-purple-100 text-purple-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Cargando plantillas...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Plantillas de Comunicación</h1>
-          <p className="text-gray-600 mt-2">Gestiona las plantillas de mensajes para huéspedes y personal</p>
-        </div>
-        <Dialog open={showCreateDialog || !!editingTemplate} onOpenChange={(open) => {
-          if (!open) {
-            setShowCreateDialog(false)
-            setEditingTemplate(null)
-            resetForm()
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Nueva Plantilla
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nombre de la plantilla"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="language">Idioma</Label>
-                  <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar idioma" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="en">Inglés</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Categoría</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="subject">Asunto</Label>
-                <Input
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="Asunto del mensaje"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="content">Contenido</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Contenido del mensaje..."
-                  rows={8}
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Use variables como {`{{guest_name}}`}, {`{{room_number}}`}, etc.
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label htmlFor="is_active">Plantilla activa</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_automatic"
-                  checked={formData.is_automatic}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_automatic: checked })}
-                />
-                <Label htmlFor="is_automatic">Envío automático</Label>
-              </div>
-
-              {formData.is_automatic && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="trigger_event">Evento disparador</Label>
-                    <Select value={formData.trigger_event} onValueChange={(value) => setFormData({ ...formData, trigger_event: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar evento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TRIGGER_EVENTS.map((event) => (
-                          <SelectItem key={event.value} value={event.value}>
-                            {event.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="send_delay_hours">Retraso (horas)</Label>
-                    <Input
-                      id="send_delay_hours"
-                      type="number"
-                      value={formData.send_delay_hours}
-                      onChange={(e) => setFormData({ ...formData, send_delay_hours: parseInt(e.target.value) || 0 })}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                setShowCreateDialog(false)
-                setEditingTemplate(null)
-                resetForm()
-              }}>
-                Cancelar
-              </Button>
-              <Button onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}>
-                {editingTemplate ? 'Actualizar' : 'Crear'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Plantillas de Comunicación</h1>
+        <p className="text-gray-600">Gestionar plantillas de mensajes automáticos y manuales</p>
       </div>
 
-      {/* Filtros */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="search">Buscar</Label>
-              <Input
-                id="search"
-                placeholder="Buscar plantillas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
             </div>
-            <div>
-              <Label htmlFor="category-filter">Categoría</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las categorías" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todas las categorías</SelectItem>
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="type-filter">Tipo</Label>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los tipos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos los tipos</SelectItem>
-                  {TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Lista de plantillas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Plantillas ({filteredTemplates.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Automático</TableHead>
-                  <TableHead>Usos</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+      {/* Filtros y Búsqueda */}
+      <div className="bg-white border rounded-lg p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+            <input
+              type="text"
+              placeholder="Buscar plantillas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map(category => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {types.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-end">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Plantilla
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de Plantillas */}
+      <div className="bg-white border rounded-lg overflow-hidden">
+        {filteredTemplates.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p>No hay plantillas que coincidan con los filtros</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Automático</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTemplates.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell>
+                  <tr key={template.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="font-medium">{template.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
                         <div className="text-sm text-gray-500">{template.subject}</div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                         {getCategoryLabel(template.category)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(template.type)}`}>
                         {getTypeLabel(template.type)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={template.is_active ? "default" : "destructive"}>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(template.is_active)}`}>
                         {template.is_active ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {template.is_automatic ? (
-                        <div>
-                          <Badge variant="default">Automático</Badge>
-                          {template.trigger_event && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {getTriggerEventLabel(template.trigger_event)}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <Badge variant="outline">Manual</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {template.messages?.length || 0}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(template)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {template.is_automatic ? 'Sí' : 'No'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditClick(template)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Editar"
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        </button>
+                        <button
                           onClick={() => handleDeleteTemplate(template.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal de Crear/Editar */}
+      {(showCreateModal || showEditModal) && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {showCreateModal ? 'Crear Nueva Plantilla' : 'Editar Plantilla'}
+              </h3>
+              
+              <form onSubmit={(e) => { e.preventDefault(); showCreateModal ? handleCreateTemplate() : handleEditTemplate() }}>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nombre*</label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Nombre de la plantilla"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Categoría*</label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Seleccionar categoría</option>
+                        {categories.filter(c => c.value !== 'all').map(category => (
+                          <option key={category.value} value={category.value}>
+                            {category.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tipo*</label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData({...formData, type: e.target.value})}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Seleccionar tipo</option>
+                        {types.filter(t => t.value !== 'all').map(type => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Idioma*</label>
+                      <select
+                        value={formData.language}
+                        onChange={(e) => setFormData({...formData, language: e.target.value})}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Asunto*</label>
+                    <input
+                      type="text"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Asunto del mensaje"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contenido*</label>
+                    <textarea
+                      value={formData.content}
+                      onChange={(e) => setFormData({...formData, content: e.target.value})}
+                      required
+                      rows={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Contenido del mensaje. Use {{variable}} para variables dinámicas."
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Evento Automático</label>
+                      <select
+                        value={formData.trigger_event}
+                        onChange={(e) => setFormData({...formData, trigger_event: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {triggerEvents.map(event => (
+                          <option key={event.value} value={event.value}>
+                            {event.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Retraso (horas)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.send_delay_hours}
+                        onChange={(e) => setFormData({...formData, send_delay_hours: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Activo</span>
+                    </label>
+                    
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_automatic}
+                        onChange={(e) => setFormData({...formData, is_automatic: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Automático</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(false)
+                      setShowEditModal(false)
+                      setEditingTemplate(null)
+                      resetForm()
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={processing}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                  >
+                    {processing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    {showCreateModal ? 'Crear' : 'Actualizar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
