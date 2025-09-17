@@ -241,3 +241,26 @@ Para soporte técnico o consultas:
 **Desarrollado con ❤️ para Hotel Paseo Las Mercedes**
 
 *Sistema PMS completo y moderno, listo para producción*
+
+
+## 🚀 **NUEVO: Deploy Listo en Vercel**
+
+### **📦 Repositorio Optimizado para Deploy**
+**🌟 Repositorio Principal para Deploy:** [https://github.com/mfconsultoresdev/hplmchatllm2](https://github.com/mfconsultoresdev/hplmchatllm2)
+
+- ✅ **Sistema completo** optimizado para Vercel
+- ✅ **Deploy en 1-click** configurado
+- ✅ **Base de datos Supabase** recomendada (gratis)
+- ✅ **Documentación completa** de deploy incluida
+- ✅ **Listo para producción** inmediata
+
+### **🎯 Deploy Rápido**
+1. **Fork**: [hplmchatllm2](https://github.com/mfconsultoresdev/hplmchatllm2)
+2. **Vercel**: Deploy en [vercel.com/new](https://vercel.com/new)
+3. **Root Directory**: `app` (importante)
+4. **Base de Datos**: Supabase (gratis)
+5. **¡Listo!** Sistema funcionando en minutos
+
+**Valor comercial: Sistema PMS enterprise de +0,000 con deploy gratuito**
+
+---
