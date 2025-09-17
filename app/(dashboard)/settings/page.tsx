@@ -1,20 +1,14 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from 'react-hot-toast'
 import { Building, Settings, Users, DollarSign, Bell } from 'lucide-react'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('hotel')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  
   const [hotelSettings, setHotelSettings] = useState({
     name: 'Hotel Paseo Las Mercedes',
     address: '',
@@ -49,505 +43,378 @@ export default function SettingsPage() {
     payment_methods: {
       cash: true,
       credit_card: true,
-      crypto: true,
-      bank_transfer: true
+      bank_transfer: true,
+      crypto: false
     }
   })
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    new_reservations: true,
-    check_in_reminders: true,
-    check_out_reminders: true,
-    payment_confirmations: true,
-    maintenance_alerts: true,
-    low_inventory_alerts: true
-  })
-
-  useEffect(() => {
-    // In a real app, fetch settings from API
-    // fetchSettings()
-  }, [])
-
-  const handleSaveHotelSettings = async () => {
+  const handleHotelSave = async () => {
     setLoading(true)
+    setError(null)
+    setSuccess(null)
+    
     try {
-      // In a real app, save to API
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      toast.success('Configuración del hotel guardada')
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setSuccess('Configuración del hotel guardada exitosamente')
     } catch (error) {
-      toast.error('Error al guardar la configuración')
+      setError('Error al guardar la configuración del hotel')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveSystemSettings = async () => {
+  const handleSystemSave = async () => {
     setLoading(true)
+    setError(null)
+    setSuccess(null)
+    
     try {
-      // In a real app, save to API
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      toast.success('Configuración del sistema guardada')
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setSuccess('Configuración del sistema guardada exitosamente')
     } catch (error) {
-      toast.error('Error al guardar la configuración')
+      setError('Error al guardar la configuración del sistema')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveBillingSettings = async () => {
+  const handleBillingSave = async () => {
     setLoading(true)
+    setError(null)
+    setSuccess(null)
+    
     try {
-      // In a real app, save to API
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      toast.success('Configuración de facturación guardada')
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setSuccess('Configuración de facturación guardada exitosamente')
     } catch (error) {
-      toast.error('Error al guardar la configuración')
+      setError('Error al guardar la configuración de facturación')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveNotificationSettings = async () => {
-    setLoading(true)
-    try {
-      // In a real app, save to API
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      toast.success('Configuración de notificaciones guardada')
-    } catch (error) {
-      toast.error('Error al guardar la configuración')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const tabs = [
+    { id: 'hotel', label: 'Hotel', icon: Building },
+    { id: 'system', label: 'Sistema', icon: Settings },
+    { id: 'billing', label: 'Facturación', icon: DollarSign },
+    { id: 'notifications', label: 'Notificaciones', icon: Bell }
+  ]
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Configuraciones</h1>
-        <p className="text-muted-foreground">Gestiona la configuración del sistema hotelero</p>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Configuración</h1>
+        <p className="text-gray-500">Administrar la configuración del sistema</p>
       </div>
 
-      <Tabs defaultValue="hotel" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="hotel" className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            Hotel
-          </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Sistema
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Facturación
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Notificaciones
-          </TabsTrigger>
-        </TabsList>
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* Hotel Settings */}
-        <TabsContent value="hotel">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración del Hotel</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="hotel_name">Nombre del Hotel</Label>
-                  <Input
-                    id="hotel_name"
-                    value={hotelSettings.name}
-                    onChange={(e) => setHotelSettings({...hotelSettings, name: e.target.value})}
+      {success && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM16.707 7.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-800">{success}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tabs Navigation */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Hotel Settings */}
+      {activeTab === 'hotel' && (
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Configuración del Hotel</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del Hotel
+              </label>
+              <input
+                type="text"
+                value={hotelSettings.name}
+                onChange={(e) => setHotelSettings({...hotelSettings, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Teléfono
+              </label>
+              <input
+                type="tel"
+                value={hotelSettings.phone}
+                onChange={(e) => setHotelSettings({...hotelSettings, phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={hotelSettings.email}
+                onChange={(e) => setHotelSettings({...hotelSettings, email: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                RIF/Tax ID
+              </label>
+              <input
+                type="text"
+                value={hotelSettings.tax_id}
+                onChange={(e) => setHotelSettings({...hotelSettings, tax_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dirección
+              </label>
+              <input
+                type="text"
+                value={hotelSettings.address}
+                onChange={(e) => setHotelSettings({...hotelSettings, address: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                value={hotelSettings.description}
+                onChange={(e) => setHotelSettings({...hotelSettings, description: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleHotelSave}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* System Settings */}
+      {activeTab === 'system' && (
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Configuración del Sistema</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hora de Check-in
+              </label>
+              <input
+                type="time"
+                value={systemSettings.check_in_time}
+                onChange={(e) => setSystemSettings({...systemSettings, check_in_time: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hora de Check-out
+              </label>
+              <input
+                type="time"
+                value={systemSettings.check_out_time}
+                onChange={(e) => setSystemSettings({...systemSettings, check_out_time: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Máximo días de anticipación
+              </label>
+              <input
+                type="number"
+                value={systemSettings.max_advance_booking_days}
+                onChange={(e) => setSystemSettings({...systemSettings, max_advance_booking_days: parseInt(e.target.value)})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Idioma por defecto
+              </label>
+              <select
+                value={systemSettings.default_language}
+                onChange={(e) => setSystemSettings({...systemSettings, default_language: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="mt-6 space-y-4">
+            <h3 className="text-md font-medium">Opciones del Sistema</h3>
+            <div className="space-y-3">
+              {[
+                { key: 'allow_same_day_booking', label: 'Permitir reservas del mismo día' },
+                { key: 'require_cc_for_booking', label: 'Requerir tarjeta de crédito para reservar' },
+                { key: 'auto_assign_rooms', label: 'Asignación automática de habitaciones' },
+                { key: 'send_confirmation_emails', label: 'Enviar emails de confirmación' },
+                { key: 'send_reminder_emails', label: 'Enviar emails de recordatorio' }
+              ].map((option) => (
+                <div key={option.key} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{option.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={systemSettings[option.key as keyof typeof systemSettings] as boolean}
+                    onChange={(e) => setSystemSettings({...systemSettings, [option.key]: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="default_currency">Moneda Principal</Label>
-                  <Select value={hotelSettings.default_currency} onValueChange={(value) => setHotelSettings({...hotelSettings, default_currency: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD - Dólar Americano</SelectItem>
-                      <SelectItem value="EUR">EUR - Euro</SelectItem>
-                      <SelectItem value="USDT">USDT - Tether</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div>
-                <Label htmlFor="hotel_address">Dirección</Label>
-                <Textarea
-                  id="hotel_address"
-                  value={hotelSettings.address}
-                  onChange={(e) => setHotelSettings({...hotelSettings, address: e.target.value})}
-                />
-              </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleSystemSave}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="hotel_phone">Teléfono</Label>
-                  <Input
-                    id="hotel_phone"
-                    value={hotelSettings.phone}
-                    onChange={(e) => setHotelSettings({...hotelSettings, phone: e.target.value})}
+      {/* Billing Settings */}
+      {activeTab === 'billing' && (
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Configuración de Facturación</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tasa de Impuesto (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={billingSettings.tax_rate}
+                onChange={(e) => setBillingSettings({...billingSettings, tax_rate: parseFloat(e.target.value)})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Moneda por defecto
+              </label>
+              <select
+                value={hotelSettings.default_currency}
+                onChange={(e) => setHotelSettings({...hotelSettings, default_currency: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="USDT">USDT</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-md font-medium mb-4">Métodos de Pago</h3>
+            <div className="space-y-3">
+              {[
+                { key: 'cash', label: 'Efectivo' },
+                { key: 'credit_card', label: 'Tarjeta de Crédito' },
+                { key: 'bank_transfer', label: 'Transferencia Bancaria' },
+                { key: 'crypto', label: 'Criptomonedas' }
+              ].map((method) => (
+                <div key={method.key} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{method.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={billingSettings.payment_methods[method.key as keyof typeof billingSettings.payment_methods]}
+                    onChange={(e) => setBillingSettings({
+                      ...billingSettings,
+                      payment_methods: {
+                        ...billingSettings.payment_methods,
+                        [method.key]: e.target.checked
+                      }
+                    })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="hotel_email">Email</Label>
-                  <Input
-                    id="hotel_email"
-                    type="email"
-                    value={hotelSettings.email}
-                    onChange={(e) => setHotelSettings({...hotelSettings, email: e.target.value})}
-                  />
-                </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="tax_id">RIF/NIT</Label>
-                  <Input
-                    id="tax_id"
-                    value={hotelSettings.tax_id}
-                    onChange={(e) => setHotelSettings({...hotelSettings, tax_id: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="logo_url">URL del Logo</Label>
-                  <Input
-                    id="logo_url"
-                    value={hotelSettings.logo_url}
-                    onChange={(e) => setHotelSettings({...hotelSettings, logo_url: e.target.value})}
-                  />
-                </div>
-              </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleBillingSave}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      )}
 
-              <div>
-                <Label htmlFor="hotel_description">Descripción</Label>
-                <Textarea
-                  id="hotel_description"
-                  value={hotelSettings.description}
-                  onChange={(e) => setHotelSettings({...hotelSettings, description: e.target.value})}
-                  placeholder="Descripción del hotel..."
-                />
-              </div>
-
-              <Button onClick={handleSaveHotelSettings} disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar Configuración'}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* System Settings */}
-        <TabsContent value="system">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración del Sistema</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="check_in_time">Hora de Check-in</Label>
-                  <Input
-                    id="check_in_time"
-                    type="time"
-                    value={systemSettings.check_in_time}
-                    onChange={(e) => setSystemSettings({...systemSettings, check_in_time: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="check_out_time">Hora de Check-out</Label>
-                  <Input
-                    id="check_out_time"
-                    type="time"
-                    value={systemSettings.check_out_time}
-                    onChange={(e) => setSystemSettings({...systemSettings, check_out_time: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="max_advance_booking">Días máximos para reserva anticipada</Label>
-                <Input
-                  id="max_advance_booking"
-                  type="number"
-                  value={systemSettings.max_advance_booking_days}
-                  onChange={(e) => setSystemSettings({...systemSettings, max_advance_booking_days: parseInt(e.target.value) || 365})}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="default_language">Idioma por Defecto</Label>
-                <Select value={systemSettings.default_language} onValueChange={(value) => setSystemSettings({...systemSettings, default_language: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="allow_same_day"
-                    checked={systemSettings.allow_same_day_booking}
-                    onCheckedChange={(checked) => setSystemSettings({...systemSettings, allow_same_day_booking: checked})}
-                  />
-                  <Label htmlFor="allow_same_day">Permitir reservas el mismo día</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="require_cc"
-                    checked={systemSettings.require_cc_for_booking}
-                    onCheckedChange={(checked) => setSystemSettings({...systemSettings, require_cc_for_booking: checked})}
-                  />
-                  <Label htmlFor="require_cc">Requerir tarjeta de crédito para reservas</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="auto_assign"
-                    checked={systemSettings.auto_assign_rooms}
-                    onCheckedChange={(checked) => setSystemSettings({...systemSettings, auto_assign_rooms: checked})}
-                  />
-                  <Label htmlFor="auto_assign">Asignación automática de habitaciones</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="confirmation_emails"
-                    checked={systemSettings.send_confirmation_emails}
-                    onCheckedChange={(checked) => setSystemSettings({...systemSettings, send_confirmation_emails: checked})}
-                  />
-                  <Label htmlFor="confirmation_emails">Enviar emails de confirmación</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reminder_emails"
-                    checked={systemSettings.send_reminder_emails}
-                    onCheckedChange={(checked) => setSystemSettings({...systemSettings, send_reminder_emails: checked})}
-                  />
-                  <Label htmlFor="reminder_emails">Enviar emails de recordatorio</Label>
-                </div>
-              </div>
-
-              <Button onClick={handleSaveSystemSettings} disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar Configuración'}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Billing Settings */}
-        <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración de Facturación</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="tax_rate">Tasa de Impuesto (%)</Label>
-                <Input
-                  id="tax_rate"
-                  type="number"
-                  step="0.01"
-                  value={billingSettings.tax_rate}
-                  onChange={(e) => setBillingSettings({...billingSettings, tax_rate: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Tasas de Cambio (desde USD)</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>USD a EUR</Label>
-                    <Input
-                      type="number"
-                      step="0.0001"
-                      value={billingSettings.currency_rates.usd_to_eur}
-                      onChange={(e) => setBillingSettings({
-                        ...billingSettings, 
-                        currency_rates: {...billingSettings.currency_rates, usd_to_eur: parseFloat(e.target.value) || 0}
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <Label>USD a USDT</Label>
-                    <Input
-                      type="number"
-                      step="0.0001"
-                      value={billingSettings.currency_rates.usd_to_usdt}
-                      onChange={(e) => setBillingSettings({
-                        ...billingSettings, 
-                        currency_rates: {...billingSettings.currency_rates, usd_to_usdt: parseFloat(e.target.value) || 0}
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <Label>USD a BNB</Label>
-                    <Input
-                      type="number"
-                      step="0.000001"
-                      value={billingSettings.currency_rates.usd_to_bnb}
-                      onChange={(e) => setBillingSettings({
-                        ...billingSettings, 
-                        currency_rates: {...billingSettings.currency_rates, usd_to_bnb: parseFloat(e.target.value) || 0}
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <Label>USD a ETC</Label>
-                    <Input
-                      type="number"
-                      step="0.000001"
-                      value={billingSettings.currency_rates.usd_to_etc}
-                      onChange={(e) => setBillingSettings({
-                        ...billingSettings, 
-                        currency_rates: {...billingSettings.currency_rates, usd_to_etc: parseFloat(e.target.value) || 0}
-                      })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Métodos de Pago Habilitados</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="cash"
-                      checked={billingSettings.payment_methods.cash}
-                      onCheckedChange={(checked) => setBillingSettings({
-                        ...billingSettings, 
-                        payment_methods: {...billingSettings.payment_methods, cash: checked}
-                      })}
-                    />
-                    <Label htmlFor="cash">Efectivo</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="credit_card"
-                      checked={billingSettings.payment_methods.credit_card}
-                      onCheckedChange={(checked) => setBillingSettings({
-                        ...billingSettings, 
-                        payment_methods: {...billingSettings.payment_methods, credit_card: checked}
-                      })}
-                    />
-                    <Label htmlFor="credit_card">Tarjeta de Crédito</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="crypto"
-                      checked={billingSettings.payment_methods.crypto}
-                      onCheckedChange={(checked) => setBillingSettings({
-                        ...billingSettings, 
-                        payment_methods: {...billingSettings.payment_methods, crypto: checked}
-                      })}
-                    />
-                    <Label htmlFor="crypto">Criptomonedas</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="bank_transfer"
-                      checked={billingSettings.payment_methods.bank_transfer}
-                      onCheckedChange={(checked) => setBillingSettings({
-                        ...billingSettings, 
-                        payment_methods: {...billingSettings.payment_methods, bank_transfer: checked}
-                      })}
-                    />
-                    <Label htmlFor="bank_transfer">Transferencia Bancaria</Label>
-                  </div>
-                </div>
-              </div>
-
-              <Button onClick={handleSaveBillingSettings} disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar Configuración'}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Settings */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración de Notificaciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="new_reservations"
-                    checked={notificationSettings.new_reservations}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, new_reservations: checked})}
-                  />
-                  <Label htmlFor="new_reservations">Nuevas reservas</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="check_in_reminders"
-                    checked={notificationSettings.check_in_reminders}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, check_in_reminders: checked})}
-                  />
-                  <Label htmlFor="check_in_reminders">Recordatorios de check-in</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="check_out_reminders"
-                    checked={notificationSettings.check_out_reminders}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, check_out_reminders: checked})}
-                  />
-                  <Label htmlFor="check_out_reminders">Recordatorios de check-out</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="payment_confirmations"
-                    checked={notificationSettings.payment_confirmations}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, payment_confirmations: checked})}
-                  />
-                  <Label htmlFor="payment_confirmations">Confirmaciones de pago</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="maintenance_alerts"
-                    checked={notificationSettings.maintenance_alerts}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, maintenance_alerts: checked})}
-                  />
-                  <Label htmlFor="maintenance_alerts">Alertas de mantenimiento</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="low_inventory_alerts"
-                    checked={notificationSettings.low_inventory_alerts}
-                    onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, low_inventory_alerts: checked})}
-                  />
-                  <Label htmlFor="low_inventory_alerts">Alertas de inventario bajo</Label>
-                </div>
-              </div>
-
-              <Button onClick={handleSaveNotificationSettings} disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar Configuración'}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Notifications Settings */}
+      {activeTab === 'notifications' && (
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Configuración de Notificaciones</h2>
+          <p className="text-gray-500">Configuración de notificaciones en desarrollo...</p>
+        </div>
+      )}
     </div>
   )
 }

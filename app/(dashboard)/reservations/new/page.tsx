@@ -1,15 +1,7 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from 'next/navigation'
-import { toast } from 'react-hot-toast'
 
 interface Room {
   id: string
@@ -32,6 +24,7 @@ export default function NewReservationPage() {
   const [loading, setLoading] = useState(false)
   const [rooms, setRooms] = useState<Room[]>([])
   const [guests, setGuests] = useState<Guest[]>([])
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     room_id: '',
     guest_id: '',
@@ -58,6 +51,7 @@ export default function NewReservationPage() {
       }
     } catch (error) {
       console.error('Error fetching rooms:', error)
+      setError('Error al cargar las habitaciones')
     }
   }
 
@@ -70,6 +64,7 @@ export default function NewReservationPage() {
       }
     } catch (error) {
       console.error('Error fetching guests:', error)
+      setError('Error al cargar los huéspedes')
     }
   }
 
@@ -100,18 +95,19 @@ export default function NewReservationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
     const nights = calculateNights()
     const room = getSelectedRoom()
     
     if (!room) {
-      toast.error('Debe seleccionar una habitación')
+      setError('Debe seleccionar una habitación')
       setLoading(false)
       return
     }
 
     if (nights <= 0) {
-      toast.error('Las fechas de check-in y check-out son inválidas')
+      setError('Las fechas de check-in y check-out son inválidas')
       setLoading(false)
       return
     }
@@ -133,14 +129,14 @@ export default function NewReservationPage() {
       })
 
       if (response.ok) {
-        toast.success('Reserva creada exitosamente')
+        alert('Reserva creada exitosamente')
         router.push('/reservations')
       } else {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Error al crear la reserva')
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al crear la reserva')
+      setError(error instanceof Error ? error.message : 'Error al crear la reserva')
     } finally {
       setLoading(false)
     }
@@ -150,103 +146,134 @@ export default function NewReservationPage() {
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Nueva Reserva</h1>
-        <p className="text-muted-foreground">Crear una nueva reserva en el sistema</p>
+        <p className="text-gray-500">Crear una nueva reserva en el sistema</p>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Información de la Reserva */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información de la Reserva</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white border rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">Información de la Reserva</h2>
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="guest_id">Huésped*</Label>
-                <Select value={formData.guest_id} onValueChange={(value) => setFormData({...formData, guest_id: value})} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar huésped" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {guests.map((guest) => (
-                      <SelectItem key={guest.id} value={guest.id}>
-                        {guest.first_name} {guest.last_name} {guest.email && `(${guest.email})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label htmlFor="guest_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  Huésped*
+                </label>
+                <select
+                  id="guest_id"
+                  value={formData.guest_id}
+                  onChange={(e) => setFormData({...formData, guest_id: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar huésped</option>
+                  {guests.map((guest) => (
+                    <option key={guest.id} value={guest.id}>
+                      {guest.first_name} {guest.last_name} {guest.email && `(${guest.email})`}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <Label htmlFor="room_id">Habitación*</Label>
-                <Select value={formData.room_id} onValueChange={(value) => setFormData({...formData, room_id: value})} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar habitación" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rooms.map((room) => (
-                      <SelectItem key={room.id} value={room.id}>
-                        Habitación {room.room_number} - {room.room_type.name} (${room.room_type.base_rate_usd}/noche)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  Habitación*
+                </label>
+                <select
+                  id="room_id"
+                  value={formData.room_id}
+                  onChange={(e) => setFormData({...formData, room_id: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar habitación</option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      Habitación {room.room_number} - {room.room_type.name} (${room.room_type.base_rate_usd}/noche)
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="check_in_date">Check-in*</Label>
-                  <Input
+                  <label htmlFor="check_in_date" className="block text-sm font-medium text-gray-700 mb-2">
+                    Check-in*
+                  </label>
+                  <input
                     id="check_in_date"
                     type="date"
                     value={formData.check_in_date}
                     onChange={(e) => setFormData({...formData, check_in_date: e.target.value})}
                     required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="check_out_date">Check-out*</Label>
-                  <Input
+                  <label htmlFor="check_out_date" className="block text-sm font-medium text-gray-700 mb-2">
+                    Check-out*
+                  </label>
+                  <input
                     id="check_out_date"
                     type="date"
                     value={formData.check_out_date}
                     onChange={(e) => setFormData({...formData, check_out_date: e.target.value})}
                     required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="adults">Adultos</Label>
-                  <Input
+                  <label htmlFor="adults" className="block text-sm font-medium text-gray-700 mb-2">
+                    Adultos
+                  </label>
+                  <input
                     id="adults"
                     type="number"
                     min="1"
                     value={formData.adults}
                     onChange={(e) => setFormData({...formData, adults: parseInt(e.target.value) || 1})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="children">Niños</Label>
-                  <Input
+                  <label htmlFor="children" className="block text-sm font-medium text-gray-700 mb-2">
+                    Niños
+                  </label>
+                  <input
                     id="children"
                     type="number"
                     min="0"
                     value={formData.children}
                     onChange={(e) => setFormData({...formData, children: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Resumen de Costos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumen de Costos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white border rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">Resumen de Costos</h2>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Noches:</span>
@@ -267,62 +294,74 @@ export default function NewReservationPage() {
               </div>
 
               <div>
-                <Label htmlFor="currency">Moneda</Label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="USDT">USDT</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
+                  Moneda
+                </label>
+                <select
+                  id="currency"
+                  value={formData.currency}
+                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USDT">USDT</option>
+                </select>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Solicitudes Especiales */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Solicitudes Especiales</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white border rounded-lg p-6 mt-6">
+          <h2 className="text-lg font-semibold mb-4">Solicitudes Especiales</h2>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="special_requests">Solicitudes Especiales</Label>
-              <Textarea
+              <label htmlFor="special_requests" className="block text-sm font-medium text-gray-700 mb-2">
+                Solicitudes Especiales
+              </label>
+              <textarea
                 id="special_requests"
                 placeholder="Cama extra, vista al mar, piso alto, etc."
                 value={formData.special_requests}
                 onChange={(e) => setFormData({...formData, special_requests: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <Label htmlFor="notes">Notas Internas</Label>
-              <Textarea
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                Notas Internas
+              </label>
+              <textarea
                 id="notes"
                 placeholder="Notas para el personal del hotel..."
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Botones */}
         <div className="flex justify-end space-x-4 mt-6">
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={() => router.push('/reservations')}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
             Cancelar
-          </Button>
-          <Button type="submit" disabled={loading}>
+          </button>
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
             {loading ? 'Creando...' : 'Crear Reserva'}
-          </Button>
+          </button>
         </div>
       </form>
     </div>
