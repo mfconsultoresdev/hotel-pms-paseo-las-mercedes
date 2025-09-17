@@ -1,12 +1,6 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Package, 
   Search,
@@ -20,7 +14,6 @@ import {
   DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
-import { toast } from 'react-hot-toast'
 
 interface Supply {
   id: string
@@ -49,365 +42,430 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Otros'
 }
 
-const categoryColors: Record<string, string> = {
-  CLEANING: 'bg-blue-100 text-blue-800',
-  LINENS: 'bg-green-100 text-green-800',
-  AMENITIES: 'bg-purple-100 text-purple-800',
-  MAINTENANCE: 'bg-orange-100 text-orange-800',
-  OTHER: 'bg-gray-100 text-gray-800'
-}
-
-const unitTypeLabels: Record<string, string> = {
-  PIECE: 'Pieza',
-  LITER: 'Litro',
-  KG: 'Kilogramo',
-  BOTTLE: 'Botella',
-  PACK: 'Paquete'
-}
-
 export default function HousekeepingSuppliesPage() {
-  const [supplies, setSupplies] = useState<Supply[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    category: '',
-    needs_reorder: '',
-    is_active: 'true',
-    name: ''
-  })
+  const [error, setError] = useState<string | null>(null)
+  const [supplies, setSupplies] = useState<Supply[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterStock, setFilterStock] = useState('all')
 
   useEffect(() => {
     fetchSupplies()
-  }, [filters])
+  }, [])
 
   const fetchSupplies = async () => {
     try {
       setLoading(true)
-      const searchParams = new URLSearchParams()
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) searchParams.append(key, value)
-      })
-
-      const response = await fetch(`/api/housekeeping/supplies?${searchParams}`)
+      const dummySupplies: Supply[] = [
+        {
+          id: '1',
+          name: 'Detergente Multiuso',
+          description: 'Detergente concentrado para limpieza general',
+          category: 'CLEANING',
+          unit_type: 'litro',
+          current_stock: 15,
+          minimum_stock: 20,
+          maximum_stock: 50,
+          unit_cost: 8500,
+          supplier_name: 'Productos Químicos S.A.',
+          supplier_contact: '+57 300 123 4567',
+          brand: 'CleanPro',
+          is_active: true,
+          needs_reorder: true,
+          storage_location: 'Almacén A - Estante 1',
+          created_at: '2024-07-01'
+        },
+        {
+          id: '2',
+          name: 'Toallas de Baño',
+          description: 'Toallas blancas de algodón 100%',
+          category: 'LINENS',
+          unit_type: 'unidad',
+          current_stock: 45,
+          minimum_stock: 30,
+          maximum_stock: 100,
+          unit_cost: 25000,
+          supplier_name: 'Textiles del Norte',
+          supplier_contact: '+57 300 234 5678',
+          brand: 'SoftTouch',
+          is_active: true,
+          needs_reorder: false,
+          storage_location: 'Almacén B - Estante 3',
+          created_at: '2024-07-02'
+        },
+        {
+          id: '3',
+          name: 'Shampoo de Amenidades',
+          description: 'Shampoo para huéspedes en botella pequeña',
+          category: 'AMENITIES',
+          unit_type: 'botella',
+          current_stock: 8,
+          minimum_stock: 25,
+          maximum_stock: 80,
+          unit_cost: 3200,
+          supplier_name: 'Amenidades Premium',
+          supplier_contact: '+57 300 345 6789',
+          brand: 'LuxuryCare',
+          is_active: true,
+          needs_reorder: true,
+          storage_location: 'Almacén A - Estante 2',
+          created_at: '2024-07-03'
+        },
+        {
+          id: '4',
+          name: 'Bombillas LED',
+          description: 'Bombillas LED 9W para habitaciones',
+          category: 'MAINTENANCE',
+          unit_type: 'unidad',
+          current_stock: 35,
+          minimum_stock: 20,
+          maximum_stock: 60,
+          unit_cost: 15000,
+          supplier_name: 'Iluminación Total',
+          supplier_contact: '+57 300 456 7890',
+          brand: 'BrightLED',
+          is_active: true,
+          needs_reorder: false,
+          storage_location: 'Almacén C - Estante 1',
+          created_at: '2024-07-04'
+        }
+      ]
       
-      if (response.ok) {
-        const result = await response.json()
-        setSupplies(result.supplies)
-      } else {
-        toast.error('Error cargando los suministros')
-      }
+      setSupplies(dummySupplies)
     } catch (error) {
-      console.error('Error fetching supplies:', error)
-      toast.error('Error de conexión')
+      setError('Error al cargar los suministros')
     } finally {
       setLoading(false)
     }
   }
 
-  const getStockStatus = (supply: Supply) => {
-    const stockPercentage = (supply.current_stock / supply.minimum_stock) * 100
+  const filteredSupplies = supplies.filter(supply => {
+    const matchesSearch = supply.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         supply.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         supply.brand.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = filterCategory === 'all' || supply.category === filterCategory
+    const matchesStock = filterStock === 'all' || 
+                        (filterStock === 'low' && supply.needs_reorder) ||
+                        (filterStock === 'normal' && !supply.needs_reorder)
     
-    if (stockPercentage <= 50) {
-      return { status: 'critical', label: 'Crítico', color: 'text-red-600' }
-    } else if (stockPercentage <= 100) {
-      return { status: 'low', label: 'Bajo', color: 'text-orange-600' }
-    } else {
-      return { status: 'good', label: 'Bueno', color: 'text-green-600' }
+    return matchesSearch && matchesCategory && matchesStock
+  })
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'CLEANING': return 'bg-blue-100 text-blue-800'
+      case 'LINENS': return 'bg-green-100 text-green-800'
+      case 'AMENITIES': return 'bg-purple-100 text-purple-800'
+      case 'MAINTENANCE': return 'bg-yellow-100 text-yellow-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getSupplyTotalValue = (supply: Supply) => {
-    return (supply.current_stock * supply.unit_cost).toFixed(2)
+  const getStockStatusColor = (supply: Supply) => {
+    if (supply.needs_reorder) return 'bg-red-100 text-red-800'
+    if (supply.current_stock <= supply.minimum_stock * 1.2) return 'bg-yellow-100 text-yellow-800'
+    return 'bg-green-100 text-green-800'
   }
 
-  const getLowStockCount = () => {
-    return supplies.filter(s => s.current_stock <= s.minimum_stock).length
+  const getStockStatusLabel = (supply: Supply) => {
+    if (supply.needs_reorder) return 'Bajo Stock'
+    if (supply.current_stock <= supply.minimum_stock * 1.2) return 'Stock Medio'
+    return 'Stock Adecuado'
   }
 
-  const getTotalInventoryValue = () => {
-    return supplies.reduce((sum, supply) => sum + (supply.current_stock * supply.unit_cost), 0).toFixed(2)
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP'
+    }).format(amount)
+  }
+
+  const totalValue = supplies.reduce((sum, supply) => sum + (supply.current_stock * supply.unit_cost), 0)
+  const lowStockCount = supplies.filter(s => s.needs_reorder).length
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Cargando suministros...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Suministros de Housekeeping</h1>
-          <p className="text-muted-foreground">
-            Inventario y gestión de suministros de limpieza
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Link href="/housekeeping/supplies/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Suministro
-            </Button>
+    <div className="p-6">
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Gestión de Suministros</h1>
+            <p className="text-gray-600">Control de inventario de productos de limpieza y amenidades</p>
+          </div>
+          <Link
+            href="/housekeeping/supplies/new"
+            className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar Suministro
           </Link>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Suministros</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{supplies.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {supplies.filter(s => s.is_active).length} activos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {getLowStockCount()}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Package className="h-6 w-6 text-blue-600" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Necesitan reposición
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${getTotalInventoryValue()}
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Productos</p>
+              <p className="text-2xl font-bold text-gray-900">{supplies.length}</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Inventario actual
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categorías</CardTitle>
-            <Box className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(supplies.map(s => s.category)).size}
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Diferentes tipos
-            </p>
-          </CardContent>
-        </Card>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Bajo Stock</p>
+              <p className="text-2xl font-bold text-gray-900">{lowStockCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <DollarSign className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Valor Total</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalValue)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Box className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Categorías</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(supplies.map(s => s.category)).size}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Input
-              placeholder="Buscar por nombre..."
-              value={filters.name}
-              onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-            />
-
-            <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas las categorías</SelectItem>
-                <SelectItem value="CLEANING">Productos de Limpieza</SelectItem>
-                <SelectItem value="LINENS">Ropa de Cama y Toallas</SelectItem>
-                <SelectItem value="AMENITIES">Amenidades</SelectItem>
-                <SelectItem value="MAINTENANCE">Mantenimiento</SelectItem>
-                <SelectItem value="OTHER">Otros</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.needs_reorder} onValueChange={(value) => setFilters(prev => ({ ...prev, needs_reorder: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Estado de stock" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                <SelectItem value="true">Stock bajo</SelectItem>
-                <SelectItem value="false">Stock normal</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.is_active} onValueChange={(value) => setFilters(prev => ({ ...prev, is_active: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                <SelectItem value="true">Activos</SelectItem>
-                <SelectItem value="false">Inactivos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={fetchSupplies}>
-              <Search className="h-4 w-4 mr-2" />
-              Buscar
-            </Button>
+      <div className="bg-white border rounded-lg p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todas</option>
+              <option value="CLEANING">Productos de Limpieza</option>
+              <option value="LINENS">Ropa de Cama y Toallas</option>
+              <option value="AMENITIES">Amenidades</option>
+              <option value="MAINTENANCE">Mantenimiento</option>
+              <option value="OTHER">Otros</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estado de Stock</label>
+            <select
+              value={filterStock}
+              onChange={(e) => setFilterStock(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos</option>
+              <option value="low">Bajo Stock</option>
+              <option value="normal">Stock Normal</option>
+            </select>
+          </div>
+          
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterCategory('all')
+                setFilterStock('all')
+              }}
+              className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Limpiar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Supplies Grid */}
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="h-32 bg-muted animate-pulse rounded" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {supplies.map((supply) => {
-            const stockStatus = getStockStatus(supply)
-            
-            return (
-              <Card key={supply.id}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{supply.name}</h3>
-                      {supply.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {supply.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex gap-2 mt-2">
-                        <Badge className={categoryColors[supply.category]} variant="secondary">
-                          {categoryLabels[supply.category]}
-                        </Badge>
-                        
-                        {supply.needs_reorder && (
-                          <Badge variant="destructive">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Reponer
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredSupplies.map((supply) => (
+          <div key={supply.id} className="bg-white border rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Package className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-semibold">{supply.name}</h3>
+                  <p className="text-sm text-gray-600">{supply.brand}</p>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(supply.category)}`}>
+                    {categoryLabels[supply.category]}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end space-y-1">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(supply)}`}>
+                  {getStockStatusLabel(supply)}
+                </span>
+                {supply.needs_reorder && (
+                  <Truck className="h-4 w-4 text-red-500" />
+                )}
+              </div>
+            </div>
 
-                    <Link href={`/housekeeping/supplies/${supply.id}`}>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    </Link>
-                  </div>
+            <div className="space-y-3 mb-4">
+              <p className="text-sm text-gray-600">{supply.description}</p>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Stock Actual:</span>
+                  <p className="font-semibold">{supply.current_stock} {supply.unit_type}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Stock Mínimo:</span>
+                  <p className="font-semibold">{supply.minimum_stock} {supply.unit_type}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Precio Unitario:</span>
+                  <p className="font-semibold">{formatCurrency(supply.unit_cost)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Ubicación:</span>
+                  <p className="font-semibold text-xs">{supply.storage_location}</p>
+                </div>
+              </div>
+            </div>
 
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">Stock Actual</div>
-                        <div className={`font-medium ${stockStatus.color}`}>
-                          {supply.current_stock} {unitTypeLabels[supply.unit_type]}
-                        </div>
-                      </div>
+            {/* Stock Bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>Stock Actual</span>
+                <span>{Math.round((supply.current_stock / supply.maximum_stock) * 100)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${
+                    supply.needs_reorder ? 'bg-red-500' : 
+                    supply.current_stock <= supply.minimum_stock * 1.2 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min((supply.current_stock / supply.maximum_stock) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
 
-                      <div>
-                        <div className="text-muted-foreground">Stock Mínimo</div>
-                        <div className="font-medium">
-                          {supply.minimum_stock} {unitTypeLabels[supply.unit_type]}
-                        </div>
-                      </div>
-                    </div>
+            {/* Supplier Info */}
+            <div className="mb-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Proveedor</h4>
+              <p className="text-sm text-gray-600">{supply.supplier_name}</p>
+              <p className="text-xs text-gray-500">{supply.supplier_contact}</p>
+            </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">Costo Unitario</div>
-                        <div className="font-medium">${supply.unit_cost.toFixed(2)}</div>
-                      </div>
-
-                      <div>
-                        <div className="text-muted-foreground">Valor Total</div>
-                        <div className="font-medium">${getSupplyTotalValue(supply)}</div>
-                      </div>
-                    </div>
-
-                    {supply.supplier_name && (
-                      <div className="text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                          <Truck className="h-3 w-3" />
-                          Proveedor
-                        </div>
-                        <div className="font-medium">{supply.supplier_name}</div>
-                        {supply.brand && (
-                          <div className="text-xs text-muted-foreground">
-                            Marca: {supply.brand}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {supply.storage_location && (
-                      <div className="text-sm">
-                        <div className="text-muted-foreground">Ubicación</div>
-                        <div className="font-medium">{supply.storage_location}</div>
-                      </div>
-                    )}
-
-                    {/* Stock Progress Bar */}
-                    <div className="pt-2">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>Nivel de stock</span>
-                        <span className={stockStatus.color}>
-                          {stockStatus.label}
-                        </span>
-                      </div>
-                      
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            stockStatus.status === 'critical' ? 'bg-red-500' :
-                            stockStatus.status === 'low' ? 'bg-orange-500' : 'bg-green-500'
-                          }`}
-                          style={{ 
-                            width: `${Math.min((supply.current_stock / supply.minimum_stock) * 100, 100)}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {supplies.length === 0 && !loading && (
-            <Card className="md:col-span-2 lg:col-span-3">
-              <CardContent className="p-12 text-center">
-                <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No hay suministros</h3>
-                <p className="text-muted-foreground mb-4">
-                  No se encontraron suministros con los filtros seleccionados
-                </p>
-                <Link href="/housekeeping/supplies/new">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar primer suministro
-                  </Button>
+            {/* Actions */}
+            <div className="flex space-x-2">
+              <Link
+                href={`/housekeeping/supplies/${supply.id}`}
+                className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-center text-sm flex items-center justify-center"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Editar
+              </Link>
+              {supply.needs_reorder && (
+                <Link
+                  href={`/housekeeping/supplies/${supply.id}/reorder`}
+                  className="flex-1 bg-orange-600 text-white py-2 px-3 rounded-md hover:bg-orange-700 transition-colors text-center text-sm flex items-center justify-center"
+                >
+                  <Truck className="h-4 w-4 mr-1" />
+                  Reordenar
                 </Link>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredSupplies.length === 0 && (
+        <div className="text-center py-12">
+          <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron suministros</h3>
+          <p className="text-gray-600">No hay productos que coincidan con los filtros aplicados.</p>
+        </div>
+      )}
+
+      {/* Low Stock Alert */}
+      {lowStockCount > 0 && (
+        <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-400 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">
+                Alert: {lowStockCount} producto{lowStockCount > 1 ? 's' : ''} con stock bajo
+              </h3>
+              <p className="text-sm text-red-700">
+                Se recomienda realizar pedidos de reabastecimiento para estos productos.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
