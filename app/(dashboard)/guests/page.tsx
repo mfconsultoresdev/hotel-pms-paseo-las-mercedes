@@ -1,99 +1,40 @@
-
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Switch } from '@/components/ui/switch'
-import { Users, UserPlus, Search, Star, Eye, Edit, Trash2, Crown } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import GuestForm from '@/components/guests/guest-form'
-import GuestDetails from '@/components/guests/guest-details'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Guest {
   id: string
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
   email?: string
   phone?: string
-  document_type?: string
-  document_number?: string
   nationality?: string
-  vip_status: boolean
-  created_at: string
-  _count: {
-    reservations: number
-    transactions: number
-  }
-}
-
-interface GuestStats {
-  total_guests: number
-  vip_guests: number
-  new_this_month: number
-  active_guests: number
+  idNumber?: string
+  createdAt: string
 }
 
 export default function GuestsPage() {
-  const { data: session } = useSession()
+  const router = useRouter()
   const [guests, setGuests] = useState<Guest[]>([])
-  const [stats, setStats] = useState<GuestStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedGuest, setSelectedGuest] = useState<string | null>(null)
-  const [showGuestForm, setShowGuestForm] = useState(false)
-  const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
-
-  // Filters
-  const [filters, setFilters] = useState({
-    search: '',
-    vip_only: false,
-    page: 1,
-    limit: 20
-  })
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchGuests = async () => {
     try {
       setLoading(true)
-      const params = new URLSearchParams()
+      setError(null)
       
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== '' && value !== false) {
-          params.append(key, value.toString())
-        }
-      })
-
-      const response = await fetch(`/api/guests?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch guests')
-
-      const data = await response.json()
-      setGuests(data.guests)
-      
-      // Calculate stats
-      const now = new Date()
-      const thisMonth = now.getMonth()
-      const thisYear = now.getFullYear()
-      
-      const guestStats: GuestStats = {
-        total_guests: data.guests.length,
-        vip_guests: data.guests.filter((g: Guest) => g.vip_status).length,
-        new_this_month: data.guests.filter((g: Guest) => {
-          const createdDate = new Date(g.created_at)
-          return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
-        }).length,
-        active_guests: data.guests.filter((g: Guest) => g._count.reservations > 0).length
+      const response = await fetch('/api/guests')
+      if (!response.ok) {
+        throw new Error('Failed to fetch guests')
       }
-      setStats(guestStats)
       
-    } catch (error) {
-      console.error('Error fetching guests:', error)
-      toast.error('Error al cargar huéspedes')
+      const data = await response.json()
+      setGuests(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -101,339 +42,200 @@ export default function GuestsPage() {
 
   useEffect(() => {
     fetchGuests()
-  }, [filters])
+  }, [])
 
-  const handleGuestCreated = () => {
-    setShowGuestForm(false)
-    setEditingGuest(null)
-    fetchGuests()
-    toast.success('Huésped creado exitosamente')
+  const filteredGuests = guests.filter(guest =>
+    guest.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    guest.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    guest.phone?.includes(searchTerm)
+  )
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Guests</h1>
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        
+        <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="h-10 w-64 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-3 w-48 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const handleGuestUpdated = () => {
-    setEditingGuest(null)
-    setShowGuestForm(false)
-    fetchGuests()
-    toast.success('Huésped actualizado exitosamente')
-  }
-
-  const handleToggleVIP = async (guestId: string, currentVipStatus: boolean) => {
-    try {
-      const response = await fetch(`/api/guests/${guestId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vip_status: !currentVipStatus })
-      })
-
-      if (!response.ok) throw new Error('Failed to update VIP status')
-      
-      fetchGuests()
-      toast.success(`Estado VIP ${!currentVipStatus ? 'activado' : 'desactivado'}`)
-    } catch (error) {
-      console.error('Error updating VIP status:', error)
-      toast.error('Error al actualizar estado VIP')
-    }
-  }
-
-  const handleDeleteGuest = async (guestId: string) => {
-    if (!confirm('¿Está seguro de que desea eliminar este huésped?')) return
-
-    try {
-      const response = await fetch(`/api/guests/${guestId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to delete guest')
-      }
-      
-      fetchGuests()
-      toast.success('Huésped eliminado exitosamente')
-    } catch (error: any) {
-      console.error('Error deleting guest:', error)
-      toast.error(error.message || 'Error al eliminar huésped')
-    }
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Guests</h1>
+          <button 
+            onClick={fetchGuests} 
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+        
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Huéspedes</h1>
-          <p className="text-muted-foreground">
-            Administra los huéspedes del hotel Paseo Las Mercedes
-          </p>
-        </div>
-        <Button onClick={() => setShowGuestForm(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Nuevo Huésped
-        </Button>
+    <div className="container mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Guests</h1>
+        <button
+          onClick={() => router.push('/guests/new')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Add Guest
+        </button>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Huéspedes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_guests}</div>
-            </CardContent>
-          </Card>
+      {/* Search */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search guests..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Huéspedes VIP</CardTitle>
-              <Crown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.vip_guests}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Nuevos este Mes</CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.new_this_month}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Huéspedes Activos</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.active_guests}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre, email o documento..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="vip-filter"
-                checked={filters.vip_only}
-                onCheckedChange={(checked) => setFilters(prev => ({ ...prev, vip_only: checked, page: 1 }))}
-              />
-              <label htmlFor="vip-filter" className="text-sm font-medium">
-                Solo VIP
-              </label>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={() => setFilters({
-                search: '',
-                vip_only: false,
-                page: 1,
-                limit: 20
-              })}
-            >
-              Limpiar Filtros
-            </Button>
+      {/* Guests List */}
+      <div className="bg-white border rounded-lg overflow-hidden">
+        {filteredGuests.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-gray-500">No guests found</p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Guests Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Huéspedes</CardTitle>
-          <CardDescription>
-            {guests.length} huéspedes encontrados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-4">Cargando huéspedes...</div>
-          ) : guests.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No se encontraron huéspedes</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Contacto</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Nacionalidad</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Reservas</TableHead>
-                    <TableHead>Registro</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {guests.map((guest) => (
-                    <TableRow key={guest.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div>
-                            <p className="font-medium">
-                              {guest.first_name} {guest.last_name}
-                            </p>
-                            {guest.vip_status && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Crown className="h-3 w-3 mr-1" />
-                                VIP
-                              </Badge>
-                            )}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Guest
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nationality
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredGuests.map((guest) => (
+                  <tr key={guest.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-700">
+                              {guest.firstName[0]}{guest.lastName[0]}
+                            </span>
                           </div>
                         </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="text-sm">
-                          {guest.email && (
-                            <p className="text-muted-foreground">{guest.email}</p>
-                          )}
-                          {guest.phone && (
-                            <p className="text-muted-foreground">{guest.phone}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        {guest.document_type && guest.document_number && (
-                          <div className="text-sm">
-                            <p>{guest.document_type}</p>
-                            <p className="text-muted-foreground">{guest.document_number}</p>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {guest.firstName} {guest.lastName}
                           </div>
-                        )}
-                      </TableCell>
-                      
-                      <TableCell>
-                        {guest.nationality || '-'}
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={guest.vip_status}
-                            onCheckedChange={() => handleToggleVIP(guest.id, guest.vip_status)}
-                          />
-                          <span className="text-xs text-muted-foreground">VIP</span>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="text-sm">
-                          <p>{guest._count.reservations} reservas</p>
-                          <p className="text-muted-foreground">
-                            {guest._count.transactions} transacciones
-                          </p>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        {format(new Date(guest.created_at), 'dd MMM yyyy', { locale: es })}
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedGuest(guest.id)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingGuest(guest)
-                              setShowGuestForm(true)
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          
-                          {guest._count.reservations === 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteGuest(guest.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          {guest.idNumber && (
+                            <div className="text-sm text-gray-500">
+                              ID: {guest.idNumber}
+                            </div>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{guest.email || 'N/A'}</div>
+                      <div className="text-sm text-gray-500">{guest.phone || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {guest.nationality || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(guest.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => router.push(`/guests/${guest.id}`)}
+                        className="text-blue-600 hover:text-blue-900 mr-3"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => router.push(`/guests/${guest.id}/edit`)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-      {/* Dialogs */}
-      <Dialog open={showGuestForm} onOpenChange={setShowGuestForm}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingGuest ? 'Editar Huésped' : 'Nuevo Huésped'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingGuest 
-                ? 'Actualizar la información del huésped'
-                : 'Registrar un nuevo huésped en el sistema'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <GuestForm 
-            guest={editingGuest}
-            onSuccess={editingGuest ? handleGuestUpdated : handleGuestCreated}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {selectedGuest && (
-        <Dialog open={!!selectedGuest} onOpenChange={() => setSelectedGuest(null)}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Detalles del Huésped</DialogTitle>
-            </DialogHeader>
-            <GuestDetails 
-              guestId={selectedGuest}
-              onUpdate={() => {
-                fetchGuests()
-                setSelectedGuest(null)
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Stats */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500">Total Guests</h3>
+          <p className="text-2xl font-bold text-gray-900">{guests.length}</p>
+        </div>
+        <div className="bg-white border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500">With Email</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {guests.filter(g => g.email).length}
+          </p>
+        </div>
+        <div className="bg-white border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500">With Phone</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {guests.filter(g => g.phone).length}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
