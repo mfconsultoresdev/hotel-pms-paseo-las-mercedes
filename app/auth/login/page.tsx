@@ -1,27 +1,22 @@
-
 'use client'
 
 import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Hotel, Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
       const result = await signIn('credentials', {
@@ -31,121 +26,142 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        toast({
-          title: "Error de autenticación",
-          description: "Credenciales inválidas. Verifique su email y contraseña.",
-          variant: "destructive",
-        })
+        setError('Credenciales inválidas. Verifique su email y contraseña.')
       } else {
-        toast({
-          title: "¡Bienvenido!",
-          description: "Inicio de sesión exitoso.",
-        })
-        
         // Refresh session and redirect
         await getSession()
         router.push('/dashboard')
         router.refresh()
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al iniciar sesión. Intente nuevamente.",
-        variant: "destructive",
-      })
+      setError('Error al iniciar sesión. Intente nuevamente.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-blue-600 p-3 rounded-2xl">
-              <Hotel className="w-8 h-8 text-white" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
+            <Hotel className="h-8 w-8 text-blue-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Hotel Paseo Las Mercedes</h1>
-          <p className="text-gray-600">Sistema de Gestión Hotelera</p>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Hotel Paseo Las Mercedes
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Inicie sesión en su cuenta
+          </p>
         </div>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Iniciar Sesión</CardTitle>
-            <CardDescription>
-              Ingrese sus credenciales para acceder al sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <div className="bg-white shadow rounded-lg p-8">
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
                     id="email"
+                    name="email"
                     type="email"
-                    placeholder="usuario@hotelpaseolm.com"
+                    autoComplete="email"
+                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="admin@hotel.com"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Contraseña
+                </label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
                     id="password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Ingrese su contraseña"
+                    autoComplete="current-password"
+                    required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    required
+                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="••••••••"
                   />
                   <button
                     type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-500" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-500" />
                     )}
                   </button>
                 </div>
               </div>
+            </div>
 
-              <Button
+            <div className="mt-6">
+              <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </Button>
-            </form>
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Iniciando sesión...
+                  </div>
+                ) : (
+                  'Iniciar Sesión'
+                )}
+              </button>
+            </div>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Cuentas de Prueba:</h3>
-              <div className="text-xs text-gray-600 space-y-1">
-                <div><strong>Admin:</strong> admin@hotelpaseolm.com / admin123</div>
-                <div><strong>Gerente:</strong> gerente@hotelpaseolm.com / admin123</div>
-                <div><strong>Recepción:</strong> recepcion@hotelpaseolm.com / admin123</div>
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Credenciales de prueba</span>
+                </div>
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-600">
+                <p>Email: admin@hotel.com</p>
+                <p>Contraseña: admin123</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="text-center mt-6 text-xs text-gray-500">
-          © 2025 Hotel Paseo Las Mercedes. Todos los derechos reservados.
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   )
