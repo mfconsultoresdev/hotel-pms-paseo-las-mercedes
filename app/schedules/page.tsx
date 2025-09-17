@@ -1,29 +1,7 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { Plus, Calendar, Clock, Filter, Users, Building } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 interface Schedule {
   id: string
@@ -48,380 +26,492 @@ interface Schedule {
     position: string
     shift_type: string
   }
+  hotel: {
+    name: string
+    address: string
+  }
 }
 
-const DEPARTMENTS = [
-  'FRONT_DESK',
-  'HOUSEKEEPING',
-  'MAINTENANCE',
-  'SECURITY',
-  'ADMINISTRATION',
-  'RESTAURANT'
-]
-
-const DEPARTMENT_LABELS: Record<string, string> = {
-  'FRONT_DESK': 'Recepción',
-  'HOUSEKEEPING': 'Limpieza',
-  'MAINTENANCE': 'Mantenimiento',
-  'SECURITY': 'Seguridad',
-  'ADMINISTRATION': 'Administración',
-  'RESTAURANT': 'Restaurante'
+const scheduleTypeLabels: Record<string, string> = {
+  REGULAR: 'Regular',
+  OVERTIME: 'Horas Extra',
+  HOLIDAY: 'Festivo',
+  WEEKEND: 'Fin de Semana',
+  EMERGENCY: 'Emergencia',
+  TRAINING: 'Capacitación'
 }
 
-const SCHEDULE_TYPE_LABELS: Record<string, string> = {
-  'REGULAR': 'Regular',
-  'OVERTIME': 'Tiempo Extra',
-  'HOLIDAY': 'Feriado',
-  'SPECIAL': 'Especial'
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  'SCHEDULED': 'Programado',
-  'CONFIRMED': 'Confirmado',
-  'MODIFIED': 'Modificado',
-  'CANCELLED': 'Cancelado'
+const statusLabels: Record<string, string> = {
+  SCHEDULED: 'Programado',
+  CONFIRMED: 'Confirmado',
+  IN_PROGRESS: 'En Progreso',
+  COMPLETED: 'Completado',
+  CANCELLED: 'Cancelado',
+  ABSENT: 'Ausente'
 }
 
 export default function SchedulesPage() {
-  const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
-  const [departmentFilter, setDepartmentFilter] = useState("ALL")
-  const [statusFilter, setStatusFilter] = useState("ALL")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterDepartment, setFilterDepartment] = useState('all')
+  const [filterDate, setFilterDate] = useState('')
 
   useEffect(() => {
-    // Set default date range (next 7 days)
-    const today = new Date()
-    const nextWeek = new Date()
-    nextWeek.setDate(today.getDate() + 7)
-    
-    setDateFrom(today.toISOString().split('T')[0])
-    setDateTo(nextWeek.toISOString().split('T')[0])
+    fetchSchedules()
   }, [])
-
-  useEffect(() => {
-    if (dateFrom && dateTo) {
-      fetchSchedules()
-    }
-  }, [departmentFilter, statusFilter, dateFrom, dateTo])
 
   const fetchSchedules = async () => {
     try {
-      const params = new URLSearchParams({
-        department: departmentFilter,
-        status: statusFilter,
-        date_from: dateFrom,
-        date_to: dateTo
-      })
-
-      const response = await fetch(`/api/schedules?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSchedules(data.schedules)
-      }
+      setLoading(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const dummySchedules: Schedule[] = [
+        {
+          id: '1',
+          schedule_date: '2024-07-26',
+          shift_start: '08:00',
+          shift_end: '16:00',
+          break_start: '12:00',
+          break_end: '13:00',
+          schedule_type: 'REGULAR',
+          status: 'CONFIRMED',
+          scheduled_hours: 8,
+          break_minutes: 60,
+          assigned_areas: 'Pisos 1-3, Recepción',
+          special_tasks: 'Capacitación de nuevo personal',
+          notes: 'Revisar inventario de suministros',
+          staff: {
+            id: '1',
+            employee_number: 'EMP001',
+            first_name: 'María',
+            last_name: 'García',
+            department: 'Housekeeping',
+            position: 'Supervisora',
+            shift_type: 'DAY'
+          },
+          hotel: {
+            name: 'Hotel Paseo Las Mercedes',
+            address: 'Av. Principal #123, Ciudad'
+          }
+        },
+        {
+          id: '2',
+          schedule_date: '2024-07-26',
+          shift_start: '16:00',
+          shift_end: '00:00',
+          schedule_type: 'REGULAR',
+          status: 'IN_PROGRESS',
+          scheduled_hours: 8,
+          break_minutes: 30,
+          assigned_areas: 'Pisos 4-6, Mantenimiento',
+          staff: {
+            id: '2',
+            employee_number: 'EMP002',
+            first_name: 'Carlos',
+            last_name: 'López',
+            department: 'Housekeeping',
+            position: 'Asistente',
+            shift_type: 'NIGHT'
+          },
+          hotel: {
+            name: 'Hotel Paseo Las Mercedes',
+            address: 'Av. Principal #123, Ciudad'
+          }
+        },
+        {
+          id: '3',
+          schedule_date: '2024-07-27',
+          shift_start: '06:00',
+          shift_end: '14:00',
+          schedule_type: 'WEEKEND',
+          status: 'SCHEDULED',
+          scheduled_hours: 8,
+          break_minutes: 60,
+          assigned_areas: 'Todo el hotel',
+          special_tasks: 'Limpieza profunda de fin de semana',
+          staff: {
+            id: '3',
+            employee_number: 'EMP003',
+            first_name: 'Ana',
+            last_name: 'Rodríguez',
+            department: 'Housekeeping',
+            position: 'Auxiliar',
+            shift_type: 'DAY'
+          },
+          hotel: {
+            name: 'Hotel Paseo Las Mercedes',
+            address: 'Av. Principal #123, Ciudad'
+          }
+        }
+      ]
+      
+      setSchedules(dummySchedules)
     } catch (error) {
-      console.error('Error fetching schedules:', error)
+      setError('Error al cargar los horarios')
     } finally {
       setLoading(false)
     }
+  }
+
+  const filteredSchedules = schedules.filter(schedule => {
+    const matchesSearch = `${schedule.staff.first_name} ${schedule.staff.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         schedule.staff.employee_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         schedule.assigned_areas?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = filterStatus === 'all' || schedule.status === filterStatus
+    const matchesDepartment = filterDepartment === 'all' || schedule.staff.department === filterDepartment
+    const matchesDate = !filterDate || schedule.schedule_date === filterDate
+    
+    return matchesSearch && matchesStatus && matchesDepartment && matchesDate
+  })
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'SCHEDULED': return 'bg-blue-100 text-blue-800'
+      case 'CONFIRMED': return 'bg-green-100 text-green-800'
+      case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-800'
+      case 'COMPLETED': return 'bg-gray-100 text-gray-800'
+      case 'CANCELLED': return 'bg-red-100 text-red-800'
+      case 'ABSENT': return 'bg-orange-100 text-orange-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getScheduleTypeColor = (type: string) => {
+    switch (type) {
+      case 'REGULAR': return 'bg-green-100 text-green-800'
+      case 'OVERTIME': return 'bg-orange-100 text-orange-800'
+      case 'HOLIDAY': return 'bg-purple-100 text-purple-800'
+      case 'WEEKEND': return 'bg-blue-100 text-blue-800'
+      case 'EMERGENCY': return 'bg-red-100 text-red-800'
+      case 'TRAINING': return 'bg-indigo-100 text-indigo-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit'
-    })
-  }
-
-  const getDepartmentColor = (department: string) => {
-    const colors: Record<string, string> = {
-      'FRONT_DESK': 'bg-blue-100 text-blue-800',
-      'HOUSEKEEPING': 'bg-green-100 text-green-800',
-      'MAINTENANCE': 'bg-orange-100 text-orange-800',
-      'SECURITY': 'bg-red-100 text-red-800',
-      'ADMINISTRATION': 'bg-purple-100 text-purple-800',
-      'RESTAURANT': 'bg-yellow-100 text-yellow-800'
-    }
-    return colors[department] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'SCHEDULED': 'bg-blue-100 text-blue-800',
-      'CONFIRMED': 'bg-green-100 text-green-800',
-      'MODIFIED': 'bg-yellow-100 text-yellow-800',
-      'CANCELLED': 'bg-red-100 text-red-800'
-    }
-    return colors[status] || 'bg-gray-100 text-gray-800'
-  }
-
-  // Group schedules by date
-  const schedulesByDate = schedules.reduce((acc, schedule) => {
-    const date = schedule.schedule_date.split('T')[0]
-    if (!acc[date]) {
-      acc[date] = []
-    }
-    acc[date].push(schedule)
-    return acc
-  }, {} as Record<string, Schedule[]>)
+  const scheduledCount = schedules.filter(s => s.status === 'SCHEDULED').length
+  const confirmedCount = schedules.filter(s => s.status === 'CONFIRMED').length
+  const inProgressCount = schedules.filter(s => s.status === 'IN_PROGRESS').length
+  const completedCount = schedules.filter(s => s.status === 'COMPLETED').length
 
   if (loading) {
     return (
       <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Cargando horarios...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Calendar className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Horarios y Turnos</h1>
-          <p className="text-gray-600">Gestiona los horarios del personal</p>
+    <div className="p-6">
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Gestión de Horarios</h1>
+            <p className="text-gray-600">Programación y seguimiento de turnos del personal</p>
+          </div>
+          <button className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Horario
+          </button>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Horario
-        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Programados</p>
+              <p className="text-2xl font-bold text-gray-900">{scheduledCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Users className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Confirmados</p>
+              <p className="text-2xl font-bold text-gray-900">{confirmedCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">En Progreso</p>
+              <p className="text-2xl font-bold text-gray-900">{inProgressCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <Building className="h-6 w-6 text-gray-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Completados</p>
+              <p className="text-2xl font-bold text-gray-900">{completedCount}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <Label htmlFor="date-from">Fecha Inicio</Label>
-              <Input
-                id="date-from"
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="date-to">Fecha Fin</Label>
-              <Input
-                id="date-to"
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Departamento</Label>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Departamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos</SelectItem>
-                  {DEPARTMENTS.map(dept => (
-                    <SelectItem key={dept} value={dept}>
-                      {DEPARTMENT_LABELS[dept]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Estado</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos</SelectItem>
-                  <SelectItem value="SCHEDULED">Programado</SelectItem>
-                  <SelectItem value="CONFIRMED">Confirmado</SelectItem>
-                  <SelectItem value="MODIFIED">Modificado</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchSchedules} className="w-full">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrar
-              </Button>
-            </div>
+      <div className="bg-white border rounded-lg p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+            <input
+              type="text"
+              placeholder="Buscar empleados..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Schedule Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Horarios</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{schedules.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Confirmados</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {schedules.filter(s => s.status === 'CONFIRMED').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {schedules.filter(s => s.status === 'SCHEDULED').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Horas</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {schedules.reduce((sum, s) => sum + s.scheduled_hours, 0)}h
-            </div>
-          </CardContent>
-        </Card>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos</option>
+              <option value="SCHEDULED">Programado</option>
+              <option value="CONFIRMED">Confirmado</option>
+              <option value="IN_PROGRESS">En Progreso</option>
+              <option value="COMPLETED">Completado</option>
+              <option value="CANCELLED">Cancelado</option>
+              <option value="ABSENT">Ausente</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos</option>
+              <option value="Housekeeping">Limpieza</option>
+              <option value="Reception">Recepción</option>
+              <option value="Maintenance">Mantenimiento</option>
+              <option value="Kitchen">Cocina</option>
+              <option value="Security">Seguridad</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterStatus('all')
+                setFilterDepartment('all')
+                setFilterDate('')
+              }}
+              className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Schedules by Date */}
-      {Object.keys(schedulesByDate).length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No se encontraron horarios para el período seleccionado</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        Object.keys(schedulesByDate)
-          .sort()
-          .map(date => (
-            <Card key={date}>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5" />
-                  <span>{formatDate(date)} - {schedulesByDate[date].length} turnos</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Empleado</TableHead>
-                        <TableHead>Departamento</TableHead>
-                        <TableHead>Turno</TableHead>
-                        <TableHead>Horas</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Notas</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {schedulesByDate[date]
-                        .sort((a, b) => new Date(a.shift_start).getTime() - new Date(b.shift_start).getTime())
-                        .map((schedule) => (
-                          <TableRow key={schedule.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${schedule.staff.first_name} ${schedule.staff.last_name}`} />
-                                  <AvatarFallback className="text-xs">
-                                    {getInitials(schedule.staff.first_name, schedule.staff.last_name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium text-sm">
-                                    {schedule.staff.first_name} {schedule.staff.last_name}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    #{schedule.staff.employee_number}
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getDepartmentColor(schedule.staff.department)}>
-                                {DEPARTMENT_LABELS[schedule.staff.department]}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <div className="font-medium">
-                                  {formatTime(schedule.shift_start)} - {formatTime(schedule.shift_end)}
-                                </div>
-                                {schedule.break_start && schedule.break_end && (
-                                  <div className="text-gray-500 text-xs">
-                                    Descanso: {formatTime(schedule.break_start)} - {formatTime(schedule.break_end)}
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <div className="font-medium">{schedule.scheduled_hours}h</div>
-                                <div className="text-gray-500 text-xs">
-                                  {schedule.break_minutes}min descanso
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(schedule.status)}>
-                                {STATUS_LABELS[schedule.status]}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {SCHEDULE_TYPE_LABELS[schedule.schedule_type]}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-32 text-xs text-gray-500 truncate">
-                                {schedule.special_tasks || schedule.notes || '-'}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+      {/* Schedules List */}
+      <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Empleado
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fecha
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Horario
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Áreas Asignadas
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredSchedules.map((schedule) => (
+                <tr key={schedule.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-sm font-medium text-blue-600">
+                          {getInitials(schedule.staff.first_name, schedule.staff.last_name)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {schedule.staff.first_name} {schedule.staff.last_name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {schedule.staff.employee_number} • {schedule.staff.position}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {schedule.staff.department}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {formatDate(schedule.schedule_date)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {schedule.shift_type} Shift
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {schedule.shift_start} - {schedule.shift_end}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {schedule.scheduled_hours}h ({schedule.break_minutes}min descanso)
+                    </div>
+                    {schedule.break_start && schedule.break_end && (
+                      <div className="text-xs text-blue-600">
+                        Descanso: {schedule.break_start} - {schedule.break_end}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScheduleTypeColor(schedule.schedule_type)}`}>
+                      {scheduleTypeLabels[schedule.schedule_type]}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(schedule.status)}`}>
+                      {statusLabels[schedule.status]}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {schedule.assigned_areas || 'No especificado'}
+                    </div>
+                    {schedule.special_tasks && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        ✨ {schedule.special_tasks}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button className="text-blue-600 hover:text-blue-900">
+                        Editar
+                      </button>
+                      <button className="text-green-600 hover:text-green-900">
+                        Confirmar
+                      </button>
+                      <button className="text-red-600 hover:text-red-900">
+                        Cancelar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {filteredSchedules.length === 0 && (
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron horarios</h3>
+          <p className="text-gray-600">No hay horarios que coincidan con los filtros aplicados.</p>
+        </div>
       )}
+
+      {/* Schedule Details Modal would go here */}
+      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <Calendar className="h-5 w-5 text-blue-400 mr-3" />
+          <div>
+            <h3 className="text-sm font-medium text-blue-800">
+              Total de Horarios: {schedules.length}
+            </h3>
+            <p className="text-sm text-blue-700">
+              {scheduledCount} programados, {confirmedCount} confirmados, {inProgressCount} en progreso, {completedCount} completados
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
