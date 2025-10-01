@@ -1,0 +1,8 @@
+
+{
+  "buildCommand": "cd app && yarn install && npx prisma generate && yarn build",
+  "devCommand": "cd app && yarn dev",
+  "installCommand": "cd app && yarn install",
+  "framework": "nextjs",
+  "outputDirectory": "app/.next"
+}
