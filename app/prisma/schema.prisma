@@ -109,6 +109,14 @@ model Hotel {
   payment_plans     PaymentPlan[]
   fiscal_documents  FiscalDocument[]
   exchange_rates    ExchangeRate[]
+  
+  // Inventory Relations
+  inventory_categories InventoryCategory[]
+  suppliers           Supplier[]
+  inventory_products  InventoryProduct[]
+  stock_movements     StockMovement[]
+  purchase_orders     PurchaseOrder[]
+  consumption_records ConsumptionRecord[]
 
   @@map("hotels")
 }
@@ -1872,3 +1880,314 @@ model ExchangeRate {
 }
 
 
+
+// ========================================
+// INVENTORY AND PURCHASING SYSTEM MODELS
+// ========================================
+
+// Inventory Categories
+model InventoryCategory {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  name            String
+  description     String?
+  code            String?  // Unique code for category
+  parent_id       String?  // For subcategories
+  
+  is_active       Boolean  @default(true)
+  display_order   Int      @default(0)
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  updated_by      String?
+  
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  parent          InventoryCategory? @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children        InventoryCategory[] @relation("CategoryHierarchy")
+  products        InventoryProduct[]
+  
+  @@unique([hotel_id, code])
+  @@map("inventory_categories")
+}
+
+// Suppliers
+model Supplier {
+  id              String   @id @default(cuid())
+  hotel_id        String
+  
+  // Supplier Information
+  name            String
+  code            String   @unique
+  contact_person  String?
+  email           String?
+  phone           String?
+  website         String?
+  
+  // Address
+  address         String?
+  city            String?
+  state           String?
+  country         String?
+  postal_code     String?
+  
+  // Tax Information
+  tax_id          String?
+  tax_status      String?  // REGISTERED, EXEMPT, etc.
+  
+  // Payment Terms
+  payment_terms   String   @default("NET_30") // IMMEDIATE, NET_15, NET_30, NET_60
+  currency        String   @default("USD")
+  
+  // Banking Information
+  bank_name       String?
+  account_number  String?
+  routing_number  String?
+  
+  // Status and Rating
+  is_active       Boolean  @default(true)
+  rating          Decimal? @db.Decimal(3,2) // 0-5 rating
+  notes           String?
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  created_by      String?
+  updated_by      String?
+  
+  hotel           Hotel    @relation(fields: [hotel_id], references: [id])
+  products        InventoryProduct[]
+  purchase_orders PurchaseOrder[]
+  
+  @@unique([hotel_id, code])
+  @@map("suppliers")
+}
+
+// Inventory Products
+model InventoryProduct {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  category_id       String?
+  supplier_id       String?
+  
+  // Product Information
+  name              String
+  sku               String   @unique
+  barcode           String?
+  description       String?
+  
+  // Classification
+  product_type      String   // AMENITY, FOOD, BEVERAGE, SUPPLY, EQUIPMENT, OTHER
+  unit_type         String   // PIECE, KG, LITER, BOX, PACK, etc.
+  
+  // Inventory Management
+  current_stock     Decimal  @db.Decimal(10,2) @default(0)
+  minimum_stock     Decimal  @db.Decimal(10,2) @default(0)
+  maximum_stock     Decimal? @db.Decimal(10,2)
+  reorder_point     Decimal  @db.Decimal(10,2) @default(0)
+  reorder_quantity  Decimal? @db.Decimal(10,2)
+  
+  // Pricing
+  cost_price        Decimal  @db.Decimal(10,2)
+  selling_price     Decimal? @db.Decimal(10,2)
+  currency          String   @default("USD")
+  
+  // Storage
+  storage_location  String?
+  shelf_life_days   Int?
+  
+  // Status
+  is_active         Boolean  @default(true)
+  is_tracked        Boolean  @default(true)
+  needs_reorder     Boolean  @default(false)
+  
+  // Images and Documents
+  image_url         String?
+  documents         Json?
+  
+  // Metadata
+  tags              Json?
+  custom_fields     Json?
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  hotel             Hotel                @relation(fields: [hotel_id], references: [id])
+  category          InventoryCategory?   @relation(fields: [category_id], references: [id])
+  supplier          Supplier?            @relation(fields: [supplier_id], references: [id])
+  stock_movements   StockMovement[]
+  purchase_order_items PurchaseOrderItem[]
+  consumption_records ConsumptionRecord[]
+  
+  @@unique([hotel_id, sku])
+  @@map("inventory_products")
+}
+
+// Stock Movements
+model StockMovement {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  product_id        String
+  
+  // Movement Details
+  movement_type     String   // IN, OUT, ADJUSTMENT, TRANSFER, WASTE, RETURN
+  quantity          Decimal  @db.Decimal(10,2)
+  previous_stock    Decimal  @db.Decimal(10,2)
+  new_stock         Decimal  @db.Decimal(10,2)
+  
+  // Cost Information
+  unit_cost         Decimal? @db.Decimal(10,2)
+  total_value       Decimal? @db.Decimal(10,2)
+  
+  // Reference
+  reference_type    String?  // PURCHASE, SALE, ADJUSTMENT, CONSUMPTION
+  reference_id      String?  // PO number, sale ID, etc.
+  reference_number  String?
+  
+  // Location
+  from_location     String?
+  to_location       String?
+  
+  // Reason and Notes
+  reason            String?
+  notes             String?
+  
+  // Date
+  movement_date     DateTime @default(now())
+  
+  created_at        DateTime @default(now())
+  created_by        String?
+  
+  hotel             Hotel            @relation(fields: [hotel_id], references: [id])
+  product           InventoryProduct @relation(fields: [product_id], references: [id])
+  
+  @@map("stock_movements")
+}
+
+// Purchase Orders
+model PurchaseOrder {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  supplier_id       String
+  
+  // Order Information
+  po_number         String   @unique
+  order_date        DateTime @default(now())
+  expected_date     DateTime?
+  received_date     DateTime?
+  
+  // Status
+  status            String   @default("DRAFT") // DRAFT, SENT, CONFIRMED, RECEIVED, CANCELLED
+  
+  // Financial
+  subtotal          Decimal  @db.Decimal(12,2) @default(0)
+  tax_amount        Decimal  @db.Decimal(12,2) @default(0)
+  shipping_cost     Decimal  @db.Decimal(12,2) @default(0)
+  discount_amount   Decimal  @db.Decimal(12,2) @default(0)
+  total_amount      Decimal  @db.Decimal(12,2)
+  currency          String   @default("USD")
+  
+  // Payment
+  payment_terms     String   @default("NET_30")
+  payment_status    String   @default("PENDING") // PENDING, PARTIAL, PAID
+  paid_amount       Decimal  @db.Decimal(12,2) @default(0)
+  
+  // Shipping
+  shipping_address  String?
+  tracking_number   String?
+  shipping_method   String?
+  
+  // Approval
+  approved_by       String?
+  approved_at       DateTime?
+  
+  // Notes
+  notes             String?
+  internal_notes    String?
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  created_by        String?
+  updated_by        String?
+  
+  hotel             Hotel                @relation(fields: [hotel_id], references: [id])
+  supplier          Supplier             @relation(fields: [supplier_id], references: [id])
+  items             PurchaseOrderItem[]
+  
+  @@unique([hotel_id, po_number])
+  @@map("purchase_orders")
+}
+
+// Purchase Order Items
+model PurchaseOrderItem {
+  id                String   @id @default(cuid())
+  purchase_order_id String
+  product_id        String
+  
+  // Item Details
+  line_number       Int
+  description       String?
+  quantity_ordered  Decimal  @db.Decimal(10,2)
+  quantity_received Decimal  @db.Decimal(10,2) @default(0)
+  
+  // Pricing
+  unit_price        Decimal  @db.Decimal(10,2)
+  line_total        Decimal  @db.Decimal(12,2)
+  tax_rate          Decimal  @db.Decimal(5,2) @default(0)
+  tax_amount        Decimal  @db.Decimal(12,2) @default(0)
+  
+  // Status
+  status            String   @default("PENDING") // PENDING, PARTIAL, RECEIVED, CANCELLED
+  
+  // Notes
+  notes             String?
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  purchase_order    PurchaseOrder    @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade)
+  product           InventoryProduct @relation(fields: [product_id], references: [id])
+  
+  @@map("purchase_order_items")
+}
+
+// Consumption Records (tracking usage per room/guest/service)
+model ConsumptionRecord {
+  id                String   @id @default(cuid())
+  hotel_id          String
+  product_id        String
+  
+  // Consumption Details
+  quantity          Decimal  @db.Decimal(10,2)
+  consumption_date  DateTime @default(now())
+  
+  // Cost Tracking
+  unit_cost         Decimal? @db.Decimal(10,2)
+  total_cost        Decimal? @db.Decimal(10,2)
+  
+  // Reference (what consumed it)
+  consumed_by_type  String   // ROOM, GUEST, SERVICE, DEPARTMENT, OTHER
+  room_id           String?
+  guest_id          String?
+  reservation_id    String?
+  department        String?
+  
+  // Reason
+  consumption_type  String   // MINIBAR, AMENITY, ROOM_SERVICE, HOUSEKEEPING, MAINTENANCE
+  notes             String?
+  
+  // Billing
+  is_billable       Boolean  @default(false)
+  billed_amount     Decimal? @db.Decimal(10,2)
+  invoice_id        String?
+  
+  created_at        DateTime @default(now())
+  created_by        String?
+  
+  hotel             Hotel            @relation(fields: [hotel_id], references: [id])
+  product           InventoryProduct @relation(fields: [product_id], references: [id])
+  
+  @@map("consumption_records")
+}

@@ -26,7 +26,8 @@ import {
   MessageSquare,
   FileText,
   UserCog,
-  Clock
+  Clock,
+  Package
 } from 'lucide-react'
 
 const navigation = [
@@ -71,6 +72,12 @@ const navigation = [
     href: '/services',
     icon: ShoppingCart,
     description: 'Gestión de servicios del hotel'
+  },
+  {
+    name: 'Inventario',
+    href: '/inventory',
+    icon: Package,
+    description: 'Gestión de productos y compras'
   },
   {
     name: 'Housekeeping',

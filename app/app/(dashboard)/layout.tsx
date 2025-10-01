@@ -82,6 +82,12 @@ const sidebarNavItems: SidebarNavItem[] = [
     description: 'Reportes para SENIAT'
   },
   {
+    title: 'Gestión Personal',
+    href: '/staff-management',
+    icon: Users,
+    description: 'Administración de personal'
+  },
+  {
     title: 'Reportes',
     href: '/reports',
     icon: BarChart3,
