@@ -294,8 +294,8 @@ Se guardó un punto de restauración antes de hacer los cambios:
 
 ---
 
-**Última actualización:** 4 de octubre de 2025 - 20:00  
-**Estado:** Correcciones aplicadas y verificadas (2 errores resueltos)  
+**Última actualización:** 4 de octubre de 2025 - 21:10  
+**Estado:** Correcciones aplicadas y verificadas (3 errores resueltos)  
 **Acción requerida:** Re-deploy en Vercel para confirmar fix
 
 ---
@@ -335,19 +335,55 @@ const averageStayDuration = stayDurations.length > 0
 
 ---
 
+## 🔴 ACTUALIZACIÓN: Tercer Error Detectado
+
+### Mensaje de Error en Vercel (Build #3):
+```
+Failed to compile.
+
+./api/reports/guests/route.ts:146:44
+Type error: Parameter 'res' implicitly has an 'any' type.
+
+  144 |
+  145 |     const averageStayDuration = stayDurations.length > 0 
+> 146 |       ? stayDurations.reduce((sum: number, res) => sum + res.nights, 0) / stayDurations.length 
+      |                                            ^
+  147 |       : 0
+```
+
+### Solución Aplicada (Tercer Error):
+
+```typescript
+// ❌ Código con error:
+const averageStayDuration = stayDurations.length > 0 
+  ? stayDurations.reduce((sum: number, res) => sum + res.nights, 0) / stayDurations.length 
+  : 0
+
+// ✅ Código corregido:
+const averageStayDuration = stayDurations.length > 0 
+  ? stayDurations.reduce((sum: number, res: { nights: number }) => sum + res.nights, 0) / stayDurations.length 
+  : 0
+```
+
+**Commit:** `7ddd75a`  
+**Mensaje:** "Corregir tercer error TypeScript: agregar tipo explícito para parámetro res en reduce"
+
+---
+
 ## 📊 Resumen de Errores Corregidos
 
-| Error | Línea | Función | Solución |
-|-------|-------|---------|----------|
-| **1** | 88 | `filter()` | `(guest: GuestWithCount)` |
-| **2** | 146 | `reduce()` | `(sum: number, res)` |
+| Error | Línea | Parámetro | Función | Solución |
+|-------|-------|-----------|---------|----------|
+| **1** | 88 | `guest` | `filter()` | `(guest: GuestWithCount)` |
+| **2** | 146 | `sum` | `reduce()` | `(sum: number, res)` |
+| **3** | 146 | `res` | `reduce()` | `(sum: number, res: { nights: number })` |
 
-**Estado final:** ✅ Todos los errores corregidos  
+**Estado final:** ✅ Todos los errores corregidos (3/3)  
 **Build local:** ✅ Exitoso  
 **TypeScript check:** ✅ Sin errores
 
 ---
 
-**Última actualización:** 4 de octubre de 2025 - 20:00  
-**Estado:** Correcciones aplicadas y verificadas (2 errores resueltos)  
+**Última actualización:** 4 de octubre de 2025 - 21:10  
+**Estado:** Correcciones aplicadas y verificadas (3 errores resueltos)  
 **Acción requerida:** Re-deploy en Vercel para confirmar fix
