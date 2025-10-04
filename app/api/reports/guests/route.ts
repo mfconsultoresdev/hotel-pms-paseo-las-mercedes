@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const repeatGuests = guestReservationCounts.filter(guest => guest._count.reservations > 1)
+    type GuestWithCount = Awaited<typeof guestReservationCounts>[number]
+    const repeatGuests = guestReservationCounts.filter((guest: GuestWithCount) => guest._count.reservations > 1)
 
     // Guest nationality distribution (if available)
     const nationalityStats = await prisma.guest.groupBy({
