@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     })
 
     const averageStayDuration = stayDurations.length > 0 
-      ? stayDurations.reduce((sum, res) => sum + res.nights, 0) / stayDurations.length 
+      ? stayDurations.reduce((sum: number, res) => sum + res.nights, 0) / stayDurations.length 
       : 0
 
     return NextResponse.json({
