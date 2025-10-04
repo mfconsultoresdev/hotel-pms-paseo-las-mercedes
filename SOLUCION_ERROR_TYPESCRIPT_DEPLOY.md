@@ -294,6 +294,60 @@ Se guardó un punto de restauración antes de hacer los cambios:
 
 ---
 
-**Última actualización:** 4 de octubre de 2025 - 19:45  
-**Estado:** Corrección aplicada y verificada  
+**Última actualización:** 4 de octubre de 2025 - 20:00  
+**Estado:** Correcciones aplicadas y verificadas (2 errores resueltos)  
+**Acción requerida:** Re-deploy en Vercel para confirmar fix
+
+---
+
+## 🔴 ACTUALIZACIÓN: Segundo Error Detectado
+
+### Mensaje de Error en Vercel (Build #2):
+```
+Failed to compile.
+
+./api/reports/guests/route.ts:146:31
+Type error: Parameter 'sum' implicitly has an 'any' type.
+
+  144 |
+  145 |     const averageStayDuration = stayDurations.length > 0 
+> 146 |       ? stayDurations.reduce((sum, res) => sum + res.nights, 0) / stayDurations.length 
+      |                               ^
+  147 |       : 0
+```
+
+### Solución Aplicada (Segundo Error):
+
+```typescript
+// ❌ Código con error:
+const averageStayDuration = stayDurations.length > 0 
+  ? stayDurations.reduce((sum, res) => sum + res.nights, 0) / stayDurations.length 
+  : 0
+
+// ✅ Código corregido:
+const averageStayDuration = stayDurations.length > 0 
+  ? stayDurations.reduce((sum: number, res) => sum + res.nights, 0) / stayDurations.length 
+  : 0
+```
+
+**Commit:** `92ae1fe`  
+**Mensaje:** "Corregir segundo error TypeScript: agregar tipo explícito en reduce de averageStayDuration"
+
+---
+
+## 📊 Resumen de Errores Corregidos
+
+| Error | Línea | Función | Solución |
+|-------|-------|---------|----------|
+| **1** | 88 | `filter()` | `(guest: GuestWithCount)` |
+| **2** | 146 | `reduce()` | `(sum: number, res)` |
+
+**Estado final:** ✅ Todos los errores corregidos  
+**Build local:** ✅ Exitoso  
+**TypeScript check:** ✅ Sin errores
+
+---
+
+**Última actualización:** 4 de octubre de 2025 - 20:00  
+**Estado:** Correcciones aplicadas y verificadas (2 errores resueltos)  
 **Acción requerida:** Re-deploy en Vercel para confirmar fix
