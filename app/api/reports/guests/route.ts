@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         guestSegments,
-        nationalityStats: nationalityStats.map(stat => ({
+        nationalityStats: nationalityStats.map((stat: { nationality: string | null; _count: { nationality: number } }) => ({
           nationality: stat.nationality || 'Unknown',
           count: stat._count.nationality
         })),
